@@ -70,22 +70,32 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
 .noidx .lg{color:var(--dim)}
 
 /* ---------- slide 2: lifecycle pipeline ---------- */
-.pipe{display:flex; align-items:stretch; gap:0; width:min(1000px,86vw)}
+.pipe{display:flex; align-items:stretch; gap:0; width:100%}
 .stagebox{flex:1; background:var(--card); border:1px solid var(--line); border-radius:10px;
-  padding:18px 14px; text-align:center}
-.stagebox .t{font-weight:600; font-size:clamp(14px,1.6vw,19px); letter-spacing:-.01em}
-.stagebox .d{color:var(--dim); font-size:12.5px; margin-top:6px; line-height:1.45}
+  padding:26px 18px; text-align:center}
+.stagebox .t{font-weight:600; font-size:clamp(16px,1.9vw,23px); letter-spacing:-.015em}
+.stagebox .d{color:var(--dim); font-size:clamp(12.5px,1.5vw,15.5px); margin-top:8px; line-height:1.5}
 .arrow{width:34px; display:flex; align-items:center; justify-content:center; color:var(--blue); font-size:20px; flex:none}
 .slide.active .stagebox{opacity:0; animation:rise .4s ease-out forwards}
 .slide.active .pipe > .stagebox:nth-of-type(1){animation-delay:.1s}
 .slide.active .pipe > .stagebox:nth-of-type(2){animation-delay:.5s}
 .slide.active .pipe > .stagebox:nth-of-type(3){animation-delay:.9s}
 .slide.active .pipe > .stagebox:nth-of-type(4){animation-delay:1.3s}
-.token{position:absolute; top:-38px; left:0; font-family:"IBM Plex Mono",monospace; font-size:12px;
-  background:var(--blue); color:#f2f1ef; border-radius:5px; padding:4px 9px; font-weight:500; opacity:0}
-.slide.active .token{animation:travel 3.2s ease-in-out 1.6s forwards}
-@keyframes travel{0%{opacity:1; left:0%} 30%{left:27%} 55%{left:54%} 80%{left:80%} 100%{opacity:1; left:80%}}
-.pipewrap{position:relative; padding-top:44px}
+.token{position:absolute; top:0; left:0; font-family:"IBM Plex Mono",monospace; font-size:clamp(13px,1.5vw,16px);
+  background:var(--blue); color:#f2f1ef; border-radius:6px; padding:7px 14px; font-weight:500; opacity:0; white-space:nowrap; z-index:2}
+.slide.active .token{animation:travel 6.5s ease-in-out 1.6s forwards}
+@keyframes travel{
+  0%{opacity:0; left:0; top:0; transform:translateX(0)}
+  4%{opacity:1}
+  40%{left:100%; top:0; transform:translateX(-100%); opacity:1}
+  46%{opacity:0; left:100%; top:0; transform:translateX(-100%)}
+  50%{opacity:0; left:0; top:58%; transform:translateX(0)}
+  56%{opacity:1}
+  96%{left:100%; top:58%; transform:translateX(-100%); opacity:1}
+  100%{left:100%; top:58%; transform:translateX(-100%); opacity:1}
+}
+.liferun{position:relative; padding-top:52px; display:flex; flex-direction:column; gap:6px;
+  align-items:center; width:min(1380px,95vw)}
 
 /* ---------- slide 3: btree vs scan (dark panels) ---------- */
 .duo{display:grid; grid-template-columns:1fr 1fr; gap:4vw; width:min(1050px,88vw)}
@@ -267,10 +277,9 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
   <div class="kicker">The journey of a query</div>
   <h2 class="in">From Enter to rows: the full round trip</h2>
   <p class="sub in" style="animation-delay:.1s">Every tuning decision you'll ever make is a prediction about this machinery.</p>
-  <div class="stage"><div style="display:flex; flex-direction:column; gap:6px; align-items:center; width:100%">
-    <div class="pipewrap">
-      <span class="token mono" data-step="9">SELECT … WHERE email = ?</span>
-      <div class="pipe">
+  <div class="stage"><div class="liferun">
+    <span class="token mono" data-step="9">SELECT … WHERE email = ?</span>
+    <div class="pipe">
         <div class="stagebox" data-step="1"><div class="t">Client → connection</div><div class="d">TCP + auth, a thread<br>picks you up. Pooled,<br>cheap — not our story.</div></div>
         <div class="arrow" data-step="2">→</div>
         <div class="stagebox" data-step="2"><div class="t">Parser</div><div class="d">syntax → tree.<br>Nothing to tune.</div></div>
@@ -278,10 +287,9 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
         <div class="stagebox" data-step="3"><div class="t">Preprocessor</div><div class="d">do these tables and<br>columns exist? privileges?<br>Validates the tree.</div></div>
         <div class="arrow" data-step="4">→</div>
         <div class="stagebox" data-step="4"><div class="t hl-u">Optimizer</div><div class="d">weighs plans on <b>estimates</b>:<br>index seek or full scan (slide 3)?<br>The brain — and the gambler.</div></div>
-      </div>
     </div>
-    <div class="arrow" data-step="5" style="width:min(1180px,94vw); text-align:right; padding-right:60px">↓</div>
-    <div class="pipe" style="width:min(1180px,94vw)">
+    <div class="arrow" data-step="5" style="width:100%; text-align:right; padding-right:70px; font-size:24px">↓</div>
+    <div class="pipe">
       <div class="stagebox" data-step="5"><div class="t">Executor</div><div class="d">walks the chosen plan,<br>asks the engine for rows.</div></div>
       <div class="arrow" data-step="6">→</div>
       <div class="stagebox" data-step="6"><div class="t hl-s">InnoDB · buffer pool</div><div class="d">every page request<br>checks RAM first<br>(ours: 1 GB — all of it fits).</div></div>
