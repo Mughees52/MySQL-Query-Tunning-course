@@ -98,10 +98,10 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
   align-items:center; width:min(1380px,95vw)}
 
 /* ---------- slide 3: btree vs scan (dark panels) ---------- */
-.duo{display:grid; grid-template-columns:1fr 1fr; gap:4vw; width:min(1050px,88vw)}
+.duo{display:grid; grid-template-columns:1fr 1fr; gap:4vw; width:min(1240px,92vw)}
 .panelbox{background:var(--dark); color:var(--dark-ink); border-radius:12px; padding:22px 24px}
-.panelbox h3{margin:0 0 4px; font-weight:600; font-size:19px; letter-spacing:-.01em}
-.panelbox .m{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--dark-dim); margin-bottom:16px}
+.panelbox h3{margin:0 0 4px; font-weight:600; font-size:clamp(19px,2.1vw,23px); letter-spacing:-.01em}
+.panelbox .m{font-family:"IBM Plex Mono",monospace; font-size:clamp(12.5px,1.4vw,15px); color:var(--dark-dim); margin-bottom:16px}
 .tree{display:flex; flex-direction:column; align-items:center; gap:22px}
 .lvl{display:flex; gap:10px}
 .node{width:52px; height:26px; border:1.5px solid var(--dark-line); border-radius:5px}
@@ -114,13 +114,13 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
 .cell{aspect-ratio:1; border:1px solid var(--dark-line); border-radius:3px}
 .slide.active .sweep .cell{animation:sweepc .18s linear forwards}
 @keyframes sweepc{to{background:rgba(201,59,43,.45)}}
-.verdict{margin-top:16px; font-family:"IBM Plex Mono",monospace; font-size:13.5px}
+.verdict{margin-top:16px; font-family:"IBM Plex Mono",monospace; font-size:clamp(13.5px,1.6vw,17px)}
 .verdict.good{color:#6cc99a}.verdict.badv{color:#e88a7d}
 
 /* ---------- slide 4: EXPLAIN anatomy (dark code panel) ---------- */
 .explain{font-family:"IBM Plex Mono",monospace; font-size:clamp(13px,1.5vw,17px);
   background:var(--dark); color:var(--dark-ink); border-radius:12px; padding:26px 30px;
-  line-height:2.1; width:min(880px,86vw)}
+  line-height:2.1; width:min(1080px,90vw)}
 .explain b{font-weight:600}
 .callout{display:inline-block; position:relative}
 .callout .tip{position:absolute; left:50%; transform:translateX(-50%); top:-2.4em; white-space:nowrap;
@@ -132,11 +132,11 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
 .dk-dim{color:var(--dark-dim)} .dk-sky{color:var(--sky)} .dk-bad{color:#e88a7d} .dk-ok{color:#6cc99a}
 
 /* ---------- slide 5: ladder ---------- */
-.ladder{display:flex; flex-direction:column-reverse; gap:8px; width:min(760px,84vw)}
+.ladder{display:flex; flex-direction:column-reverse; gap:10px; width:min(980px,88vw)}
 .rung{display:grid; grid-template-columns:130px 1fr 160px; gap:14px; align-items:center;
   background:var(--card); border:1px solid var(--line); border-radius:8px; padding:11px 18px}
 .rung .ty{font-family:"IBM Plex Mono",monospace; font-weight:600}
-.rung .cost{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--dim); text-align:right}
+.rung .cost{font-family:"IBM Plex Mono",monospace; font-size:clamp(13px,1.5vw,16px); color:var(--dim); text-align:right}
 .rung.worst{border-color:rgba(201,59,43,.55); border-width:1.5px}
 .rung.best{border-color:rgba(29,128,72,.5); border-width:1.5px}
 .slide.active .rung{opacity:0; animation:rise .35s ease-out forwards}
@@ -147,12 +147,12 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
 /* ---------- slide 6: ANALYZE tree ---------- */
 .atree{font-family:"IBM Plex Mono",monospace; font-size:clamp(12px,1.35vw,15.5px);
   background:var(--dark); color:var(--dark-ink); border:0; border-radius:12px; padding:24px 28px;
-  line-height:1.9; width:min(900px,88vw)}
+  line-height:1.9; width:min(1100px,92vw)}
 .atree .l2{padding-left:2.2em}
 .slide.active .flowup{opacity:0; animation:rise .5s ease-out forwards}
 .slide.active .fu1{animation-delay:.4s}.slide.active .fu2{animation-delay:1.2s}
 .gap{margin-top:18px; font-size:clamp(14px,1.6vw,17px)}
-.gapbar{display:flex; align-items:center; gap:10px; margin-top:8px; font-size:12.5px; font-family:"IBM Plex Mono",monospace}
+.gapbar{display:flex; align-items:center; gap:10px; margin-top:8px; font-size:clamp(13px,1.5vw,16px); font-family:"IBM Plex Mono",monospace}
 .gapbar .b{height:14px; border-radius:3px}
 .gapbar .b.est{background:var(--sky); width:0}
 .gapbar .b.act2{background:var(--ok); width:0}
@@ -161,12 +161,12 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
 @keyframes grow29{to{width:300px}} @keyframes grow1{to{width:3px}}
 
 /* ---------- slide 7: funnel ---------- */
-.funnel{width:min(820px,84vw)}
+.funnel{width:min(1020px,90vw)}
 .fr{display:grid; grid-template-columns:190px 1fr 120px; align-items:center; gap:14px; margin:12px 0}
-.fr .lab{font-family:"IBM Plex Mono",monospace; font-size:13.5px; color:var(--dim)}
+.fr .lab{font-family:"IBM Plex Mono",monospace; font-size:clamp(14px,1.6vw,17px); color:var(--dim)}
 .fr .barwrap{background:var(--card); border:1px solid var(--line); border-radius:5px; height:26px; overflow:hidden}
 .fr .fbar{height:100%; width:0; border-radius:4px}
-.fr .num{font-family:"IBM Plex Mono",monospace; font-size:14px; text-align:right; font-variant-numeric:tabular-nums}
+.fr .num{font-family:"IBM Plex Mono",monospace; font-size:clamp(14px,1.6vw,17px); text-align:right; font-variant-numeric:tabular-nums}
 .slide.active .fb1{background:var(--sky); animation:w100 1.2s ease-out .15s forwards}
 .slide.active .fb2{background:var(--sky); animation:w86 1.2s ease-out .15s forwards}
 .slide.active .fb3{background:var(--ok); animation:w001 1.2s ease-out .15s forwards}
@@ -174,12 +174,12 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
 .smell{margin-top:20px; font-size:clamp(15px,1.7vw,19px)}
 
 /* ---------- slide 8: rules ---------- */
-.rules{display:grid; gap:14px; width:min(760px,84vw)}
+.rules{display:grid; gap:16px; width:min(940px,88vw)}
 .rule{display:grid; grid-template-columns:56px 1fr; gap:16px; align-items:start;
   background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 22px}
 .rule .n{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:26px; color:var(--blue)}
 .rule .t{font-weight:600; font-size:17px}
-.rule .d{color:var(--dim); font-size:14.5px; margin-top:3px}
+.rule .d{color:var(--dim); font-size:clamp(14.5px,1.7vw,18px); margin-top:3px}
 .slide.active .rule{opacity:0; animation:rise .4s ease-out forwards}
 .slide.active .rule:nth-child(1){animation-delay:.2s}
 .slide.active .rule:nth-child(2){animation-delay:.5s}
