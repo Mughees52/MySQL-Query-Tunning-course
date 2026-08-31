@@ -1,19 +1,36 @@
 -- ============================================================================
 -- LIVE DEMO SCRIPT · video 2 · lesson 0.1 — All about joins, MySQL edition
--- Deck: chapter0 slides 1–5
+-- Deck: chapter0 slides 1–6
 -- STATE: fresh seed, PK-only. CREATES: nothing. All demos read-only.
 -- Warm-up: run this file top-to-bottom once OFF CAMERA before recording
 -- (buffer pool warm + you verify your numbers land near the printed ones).
 -- On camera: paste ONE step at a time. Run it. Then explain what appeared.
 -- ============================================================================
 
--- STEP 1 · [SLIDE 3] INNER JOIN — run it, point at the reunited columns
+-- STEP 1 · [SLIDE 2] how MySQL reads a SELECT — run the pipeline query
+-- expect: 3 rows — US 309,882 · GB 154,855 · DE 102,838
+SELECT ship_country, COUNT(*) AS orders
+FROM orders
+WHERE status = 'completed'
+GROUP BY ship_country
+HAVING COUNT(*) > 50000
+ORDER BY orders DESC
+LIMIT 3;
+
+-- STEP 2 · the proof of execution order — alias in WHERE fails, in ORDER BY works
+-- expect: ERROR 1054 (42S22): Unknown column 'orders' in 'where clause'
+SELECT ship_country, COUNT(*) AS orders
+FROM orders
+WHERE orders > 50000
+GROUP BY ship_country;
+
+-- STEP 3 · [SLIDE 4] INNER JOIN — run it, point at the reunited columns
 SELECT c.full_name, c.country_code, co.country_name, co.region
 FROM customers c
 INNER JOIN countries co ON co.country_code = c.country_code
 LIMIT 5;
 
--- STEP 2 · [SLIDE 4] LEFT JOIN — the NULL is an answer, not dirty data
+-- STEP 4 · [SLIDE 5] LEFT JOIN — the NULL is an answer, not dirty data
 -- expect: Argentina/Belgium/Greece/Pakistan/Saudi Arabia rows show NULL customer
 SELECT co.country_name, c.full_name
 FROM countries co
@@ -21,12 +38,12 @@ LEFT JOIN customers c ON c.country_code = co.country_code
 ORDER BY c.full_name IS NULL DESC, co.country_name
 LIMIT 8;
 
--- STEP 3 · [SLIDE 4] the row arithmetic — say the numbers BEFORE you run
+-- STEP 5 · [SLIDE 5] the row arithmetic — say the numbers BEFORE you run
 -- expect: 1200000, then 1208266 (the +8,266 never-ordered customers)
 SELECT COUNT(*) FROM customers c INNER JOIN orders o ON o.customer_id = c.id;
 SELECT COUNT(*) FROM customers c LEFT  JOIN orders o ON o.customer_id = c.id;
 
--- STEP 4 · [SLIDE 5] the FULL OUTER JOIN MySQL doesn't have — emulated
+-- STEP 6 · [SLIDE 6] the FULL OUTER JOIN MySQL doesn't have — emulated
 -- expect: 32 rows (17 matched + 15 lookup-only + 0 ship-only)
 WITH ship_stats AS (
   SELECT ship_country, COUNT(*) AS orders FROM orders GROUP BY ship_country)

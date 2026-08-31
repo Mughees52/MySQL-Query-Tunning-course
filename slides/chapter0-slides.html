@@ -107,6 +107,30 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
   .slide .in,.slide.active .mini tbody tr,.slide.active .arm,.slide.active .pos,.slide.active .lstep{opacity:1 !important; transform:none}
 }
 
+/* slide 2: how MySQL reads a SELECT */
+.execwrap{display:flex; gap:2.5vw; align-items:flex-start; flex-wrap:wrap; justify-content:center}
+.qbox{background:var(--dark); color:var(--dark-ink); border-radius:10px; padding:20px 24px;
+  font-family:"IBM Plex Mono",monospace; font-size:clamp(13px,1.5vw,16.5px); line-height:1.6}
+.qbox .cap{font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--dark-dim); margin-bottom:10px}
+.qline{display:flex; align-items:center; gap:12px; padding:4px 8px; border-radius:6px}
+.qline b{color:var(--sky); font-weight:600}
+.qline:has(.xchip.on){background:rgba(63,157,224,.16)}
+.xchip{width:24px; height:24px; border-radius:50%; background:var(--blue); color:#fff; flex:none;
+  display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:600}
+.xpipe{display:flex; flex-direction:column; gap:7px; width:min(560px,90vw)}
+.xpipe .cap{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--dim); margin-bottom:3px}
+.xrow{display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--line);
+  border-radius:8px; padding:8px 14px}
+.xrow .n{width:24px; height:24px; border-radius:50%; background:var(--blue); color:#fff; flex:none;
+  display:flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600}
+.xrow .k{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:clamp(12.5px,1.4vw,15px); width:9ch; flex:none}
+.xrow .d{font-size:clamp(11.5px,1.3vw,13.5px); color:var(--dim); line-height:1.35; flex:1}
+.xrow .r{font-family:"IBM Plex Mono",monospace; font-size:clamp(12px,1.4vw,15px); font-variant-numeric:tabular-nums; text-align:right; flex:none}
+.xrow.ghost{border-style:dashed; opacity:.75}
+.xrow.ghost .n{background:var(--dim)}
+.slide.active .xrow{opacity:0; animation:rise .35s ease-out forwards}
+
 /* presenter-paced builds: elements marked data-step appear one keypress at a time */
 .slide [data-step]:not(.on), .slide [data-step]:not(.on) *{animation:none !important}
 .slide [data-step]:not(.on){opacity:0 !important}
@@ -146,6 +170,42 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
     </div>
   </div></div>
   <div class="foot">→ / space: next build, then next slide · ← undoes a build</div>
+</section>
+
+<!-- 2 · how a SELECT executes -->
+<section class="slide">
+  <div class="kicker">Before anything else</div>
+  <h2 class="in">How MySQL reads your SELECT</h2>
+  <p class="sub in" style="animation-delay:.1s">You write it top-to-bottom. MySQL executes it in a different
+  order — and most surprises in SQL trace back to not knowing which.</p>
+  <div class="stage"><div style="display:flex; flex-direction:column; gap:16px; align-items:center">
+    <div class="execwrap">
+      <div class="qbox">
+        <div class="cap">as written</div>
+        <div class="qline"><span class="xchip" data-step="5">5</span><span><b>SELECT</b> ship_country, COUNT(*) <b>AS</b> orders</span></div>
+        <div class="qline"><span class="xchip" data-step="1">1</span><span><b>FROM</b> orders</span></div>
+        <div class="qline"><span class="xchip" data-step="2">2</span><span><b>WHERE</b> status = 'completed'</span></div>
+        <div class="qline"><span class="xchip" data-step="3">3</span><span><b>GROUP BY</b> ship_country</span></div>
+        <div class="qline"><span class="xchip" data-step="4">4</span><span><b>HAVING</b> COUNT(*) &gt; 50000</span></div>
+        <div class="qline"><span class="xchip" data-step="6">6</span><span><b>ORDER BY</b> orders <b>DESC</b></span></div>
+        <div class="qline"><span class="xchip" data-step="7">7</span><span><b>LIMIT</b> 3;</span></div>
+      </div>
+      <div class="xpipe">
+        <div class="cap">as executed — rows surviving each stage (measured)</div>
+        <div class="xrow" data-step="1"><span class="n">1</span><span class="k">FROM</span><span class="d">gather the raw rows</span><span class="r">1,200,000</span></div>
+        <div class="xrow" data-step="2"><span class="n">2</span><span class="k">WHERE</span><span class="d">filter first — the SELECT alias doesn't exist yet</span><span class="r hl-s">1,032,479</span></div>
+        <div class="xrow" data-step="3"><span class="n">3</span><span class="k">GROUP BY</span><span class="d">bucket what survived, per ship_country</span><span class="r hl-s">17 groups</span></div>
+        <div class="xrow" data-step="4"><span class="n">4</span><span class="k">HAVING</span><span class="d">WHERE for groups — it can see COUNT(*)</span><span class="r hl-s">7</span></div>
+        <div class="xrow" data-step="5"><span class="n">5</span><span class="k">SELECT</span><span class="d">project the columns — the alias <b>orders</b> is born here</span><span class="r hl-s">7</span></div>
+        <div class="xrow ghost" data-step="5"><span class="n">·</span><span class="k">DISTINCT</span><span class="d">would deduplicate here — none in this query</span><span class="r">—</span></div>
+        <div class="xrow" data-step="6"><span class="n">6</span><span class="k">ORDER BY</span><span class="d">sort — running after SELECT, it CAN use the alias</span><span class="r hl-s">7</span></div>
+        <div class="xrow" data-step="7"><span class="n">7</span><span class="k">LIMIT</span><span class="d">keep the top slice: US · GB · DE</span><span class="r hl-g">3</span></div>
+      </div>
+    </div>
+    <div class="arith" data-step="8" style="width:min(1080px,94vw)">the consequence: <b>WHERE orders &gt; 50000</b> → ERROR 1054, unknown column — WHERE runs at step 2, the alias is born at step 5<br>
+    <b>ORDER BY orders</b> works fine — it runs at step 6 · chapter 3 turns this pipeline into a tuning tool</div>
+  </div></div>
+  <div class="foot">1,200,000 → 1,032,479 → 17 → 7 → 3 · every count measured live · the earlier a row dies, the less everything after it costs</div>
 </section>
 
 <!-- 2 -->

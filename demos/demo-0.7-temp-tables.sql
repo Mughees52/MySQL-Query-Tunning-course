@@ -1,13 +1,13 @@
 -- ============================================================================
 -- LIVE DEMO SCRIPT · video 4 · lesson 0.7 — Temporary tables
--- Deck: chapter0 slides 8–9
+-- Deck: chapter0 slides 9–10
 -- STATE: fresh seed, PK-only. CREATES: session temp table only (vanishes on quit).
 -- Warm-up: run this file top-to-bottom once OFF CAMERA before recording
 -- (buffer pool warm + you verify your numbers land near the printed ones).
 -- On camera: paste ONE step at a time. Run it. Then explain what appeared.
 -- ============================================================================
 
--- STEP 1 · [SLIDE 8] the report against the base table — feel the 659 ms
+-- STEP 1 · [SLIDE 9] the report against the base table — feel the 659 ms
 SELECT status, COUNT(*), ROUND(AVG(total_cents)/100, 2)
 FROM orders WHERE ship_country = 'DE'
 GROUP BY status;
@@ -24,6 +24,6 @@ SELECT status, COUNT(*), ROUND(AVG(total_cents)/100, 2)
 FROM tmp_de
 GROUP BY status;
 
--- STEP 4 · [SLIDE 9] the reopen landmine — let it ERROR on camera
+-- STEP 4 · [SLIDE 10] the reopen landmine — let it ERROR on camera
 -- expect: ERROR 1137 (HY000): Can't reopen table: 'a'
 SELECT COUNT(*) FROM tmp_de a JOIN tmp_de b ON b.customer_id = a.customer_id;

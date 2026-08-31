@@ -1,8 +1,8 @@
 # Chapter 0 — Foundations: Combining Data in MySQL
 ### Lesson transcripts
 
-> **Rhythm — teach, then do:** lesson 0.1 (slides 1–5) → labs 0.2–0.3 ·
-> lesson 0.4 (slides 6–7) → labs 0.5–0.6 · lesson 0.7 (slides 8–9) →
+> **Rhythm — teach, then do:** lesson 0.1 (slides 1–6) → labs 0.2–0.3 ·
+> lesson 0.4 (slides 7–8) → labs 0.5–0.6 · lesson 0.7 (slides 9–10) →
 > labs 0.8–0.9. Watch the matching deck slides with each lesson, then
 > practice before moving on.
 
@@ -30,7 +30,24 @@ Four constructs, one organizing idea — scope: a subquery produces one value,
 a CTE lives for one statement, a temp table for one session. Keep that
 frame; everything in this chapter hangs off it.
 
-[SLIDE 2: two tables that belong together]
+[SLIDE 2: how MySQL reads your SELECT]
+
+One more foundation before joins — the one most developers and quite a few
+DBAs never learned: **a SELECT is not executed in the order you write it.**
+You write SELECT first; MySQL runs it fifth. The real order is FROM →
+WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT, and the
+slide walks a real query through every stage with measured survivor counts:
+1.2 million rows into FROM, 1,032,479 past WHERE, 17 groups out of GROUP
+BY, 7 past HAVING, 3 after LIMIT. Two things to internalize. First,
+*aliases are born at SELECT*: that's why `WHERE orders > 50000` throws
+ERROR 1054 — WHERE runs at step 2, before the alias exists — while
+`ORDER BY orders` works, because sorting runs after. Second, *rows that
+die early cost nothing later*: everything that survives WHERE is carried
+through grouping, projection and sorting, so the cheapest row is the one
+eliminated first. Chapter 3 turns this pipeline into a full tuning tool;
+for now, just keep the order in your head.
+
+[SLIDE 3: two tables that belong together]
 
 Our running example, straight from UrbanCart: a few `customers`, and the
 `countries` lookup that maps a country code to a name and region. The
@@ -38,7 +55,7 @@ customers table stores only the code — `US`, `GB` — because storing the
 name and region on every one of 300,000 customers would repeat the same
 facts endlessly. Joins are how normalized data comes back together.
 
-[SLIDE 3: INNER JOIN — only the matches]
+[SLIDE 4: INNER JOIN — only the matches]
 
 ```sql
 SELECT c.full_name, c.country_code, co.country_name, co.region
@@ -54,7 +71,7 @@ and when both columns share a name you may write `USING (country_code)` —
 same meaning, and the join column appears once instead of twice in
 `SELECT *` output.
 
-[SLIDE 4: LEFT JOIN — keep my side, NULL-extend the gaps]
+[SLIDE 5: LEFT JOIN — keep my side, NULL-extend the gaps]
 
 ```sql
 SELECT co.country_name, c.full_name
@@ -78,7 +95,7 @@ An inner join can also *multiply* rows: one customer × 243 orders = 243
 result rows. Joins change row counts; always know which grain you're at
 (chapter 3 shows what happens when you don't).
 
-[SLIDE 5: FULL OUTER JOIN — the one MySQL doesn't have]
+[SLIDE 6: FULL OUTER JOIN — the one MySQL doesn't have]
 
 PostgreSQL and SQL Server offer `FULL OUTER JOIN`: keep everything from
 *both* sides, NULL-extending each. **MySQL has no FULL OUTER JOIN** — a
@@ -109,7 +126,7 @@ SELECT, WHERE, or FROM — and each placement means something different.
 MySQL 8 also gives us common table expressions. Let's take them in turn,
 with the plans that chapter 1 taught you to read.
 
-[SLIDE 6, card 1: subquery in SELECT — one value per row]
+[SLIDE 7, card 1: subquery in SELECT — one value per row]
 
 ```sql
 SELECT ship_country,
@@ -129,7 +146,7 @@ columns — runs per row instead: fine on an indexed micro-probe (lab 3.13
 measured 300k of them at 1 µs each), catastrophic otherwise (the capstone
 killed a per-group one that couldn't finish).
 
-[SLIDE 6, card 2: subquery in WHERE — a dynamic filter]
+[SLIDE 7, card 2: subquery in WHERE — a dynamic filter]
 
 ```sql
 SELECT COUNT(*) FROM orders
@@ -142,7 +159,7 @@ orders sit above the mean, and the plan again says `run only once`. With
 `IN (SELECT …)` instead of a comparison, you're in semijoin territory —
 deep-dive 3.15 toggles that transform off and on so you can watch it.
 
-[SLIDE 6, card 3 + SLIDE 7: subquery in FROM, and CTEs]
+[SLIDE 7, card 3 + SLIDE 8: subquery in FROM, and CTEs]
 
 A FROM-position subquery — a *derived table* — makes query results act as
 a table. MySQL either **merges** it into the outer query or
@@ -179,7 +196,7 @@ Subqueries and CTEs live for one statement. Sometimes you want a result
 to *stick around* — for the next query, and the one after that. That's a
 temporary table.
 
-[SLIDE 8: the temp table lifecycle]
+[SLIDE 9: the temp table lifecycle]
 
 ```sql
 CREATE TEMPORARY TABLE tmp_de AS
@@ -204,7 +221,7 @@ trivially: it refreshes the statistics the optimizer plans from — the
 same statistics machinery from chapters 1 and 2, and MySQL's counterpart
 to the `ANALYZE` habit PostgreSQL folks know.
 
-[SLIDE 9: materializing a view, and the reopen gotcha]
+[SLIDE 10: materializing a view, and the reopen gotcha]
 
 Temp tables truly shine against **views**. A view stores no data — it
 stores a *query*, re-run at every reference. Our `v_order_geo` view joins

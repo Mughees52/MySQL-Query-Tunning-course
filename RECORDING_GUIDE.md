@@ -51,9 +51,9 @@ apply the one fix → run again → point at the delta.
 | # | Video | Deck · slides | Learners then do |
 |---|---|---|---|
 | 1 | Intro 0.0 | intro-slides.html · 1–7 | run `setup/setup.sh`, connect |
-| 2 | 0.1 Joins | chapter0 · 1–5 | 0.2–0.3 |
-| 3 | 0.4 Subqueries & CTEs | chapter0 · 6–7 | 0.5–0.6 |
-| 4 | 0.7 Temp tables | chapter0 · 8–9 | 0.8–0.9 |
+| 2 | 0.1 Joins | chapter0 · 1–6 | 0.2–0.3 |
+| 3 | 0.4 Subqueries & CTEs | chapter0 · 7–8 | 0.5–0.6 |
+| 4 | 0.7 Temp tables | chapter0 · 9–10 | 0.8–0.9 |
 | 5 | 1.1 Journey of a query | chapter1 · 1–3 | 1.2–1.3 |
 | 6 | 1.4 Your first EXPLAIN | chapter1 · 4–5 | 1.5–1.7 |
 | 7 | 1.8 Measuring honestly | chapter1 · 6, 8 | 1.9 |
