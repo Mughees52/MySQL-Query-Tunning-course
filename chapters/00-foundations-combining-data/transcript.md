@@ -36,9 +36,13 @@ One more foundation before joins — the one most developers and quite a few
 DBAs never learned: **a SELECT is not executed in the order you write it.**
 You write SELECT first; MySQL runs it fifth. The real order is FROM →
 WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT, and the
-slide walks a real query through every stage with measured survivor counts:
-1.2 million rows into FROM, 1,032,479 past WHERE, 17 groups out of GROUP
-BY, 7 past HAVING, 3 after LIMIT. Two things to internalize. First,
+slide walks a real query through every stage with measured survivor counts
+— measured on our data, not derivable from the query text: 1.2 million
+rows into FROM, 1,032,479 past WHERE, 17 groups out of GROUP BY, 7 past
+HAVING, 3 after LIMIT. (And note the greyed DISTINCT stage: writing
+`SELECT DISTINCT` on this query would be a no-op — GROUP BY already left
+one row per country. `DISTINCT` stacked on `GROUP BY` is a common code
+smell; if you group, the groups are already unique.) Two things to internalize. First,
 *aliases are born at SELECT*: that's why `WHERE orders > 50000` throws
 ERROR 1054 — WHERE runs at step 2, before the alias exists — while
 `ORDER BY orders` works, because sorting runs after. Second, *rows that
