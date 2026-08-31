@@ -131,6 +131,24 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
 .xrow.ghost .n{background:var(--dim)}
 .slide.active .xrow{opacity:0; animation:rise .35s ease-out forwards}
 
+/* slide 3: a query inside a query */
+.sqwrap{display:flex; gap:2.2vw; align-items:stretch; flex-wrap:wrap; justify-content:center}
+.sqpanel{background:var(--dark); color:var(--dark-ink); border-radius:10px; padding:18px 22px;
+  font-family:"IBM Plex Mono",monospace; font-size:clamp(12.5px,1.4vw,15.5px); line-height:1.75;
+  width:min(560px,90vw); display:flex; flex-direction:column; gap:10px}
+.sqpanel .cap{font-family:"IBM Plex Sans",sans-serif; font-size:12px; letter-spacing:.1em;
+  text-transform:uppercase; font-weight:600}
+.sqpanel .cap.oncecap{color:#6cc99a} .sqpanel .cap.percap{color:#e88a7d}
+.sqpanel b{color:var(--sky); font-weight:600}
+.sqinner{display:inline-block; border:1px solid var(--sky); border-radius:6px; padding:1px 7px;
+  background:rgba(63,157,224,.14)}
+.sqnote{background:rgba(242,241,239,.07); border-radius:8px; padding:10px 14px;
+  font-size:clamp(12px,1.35vw,14.5px); line-height:1.6}
+.sqnote .dkk{color:var(--dark-dim)}
+.planq{border-left:3px solid var(--sky); padding:4px 12px; color:var(--dark-dim);
+  font-size:clamp(11.5px,1.25vw,13.5px); line-height:1.55}
+.planq i{color:#6cc99a; font-style:normal; font-weight:600}
+
 /* presenter-paced builds: elements marked data-step appear one keypress at a time */
 .slide [data-step]:not(.on), .slide [data-step]:not(.on) *{animation:none !important}
 .slide [data-step]:not(.on){opacity:0 !important}
@@ -151,19 +169,19 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
       <div class="pos" data-step="1"><span class="t"><small>01 · joins</small>Reassemble what normalization split</span>
         <div class="code">FROM customers c<br>JOIN countries co<br>&nbsp;&nbsp;ON co.country_code = c.country_code</div>
         <div class="note">INNER keeps matches · LEFT keeps every left row (NULLs for the gaps) · no FULL OUTER JOIN in MySQL — you'll build one from UNION ALL</div>
-        <div class="m">300,000 customers · 32 countries → slides 2–5</div></div>
+        <div class="m">300,000 customers · 32 countries → slides 4–7</div></div>
       <div class="pos" data-step="2"><span class="t"><small>02 · subqueries</small>A query inside a query</span>
         <div class="code">WHERE total_cents &gt;<br>&nbsp;&nbsp;<span class="dk-sky">(SELECT AVG(total_cents)<br>&nbsp;&nbsp; FROM orders)</span></div>
         <div class="note">three homes — SELECT, WHERE, FROM · uncorrelated = computed once, reused for every row</div>
-        <div class="m">543,009 rows · plan says "run only once" → slide 6</div></div>
+        <div class="m">543,009 rows · plan says "run only once" → slides 3, 8</div></div>
       <div class="pos" data-step="3"><span class="t"><small>03 · CTEs</small>WITH — name the block, read top-down</span>
         <div class="code"><span class="dk-sky">WITH country_rev AS (…)</span><br>SELECT …<br>FROM country_rev JOIN countries …</div>
         <div class="note">readability is the product: identical plan to the FROM-subquery · referenced twice = materialized once</div>
-        <div class="m">0.51 s vs 0.96 s inlined twice → slide 7</div></div>
+        <div class="m">0.51 s vs 0.96 s inlined twice → slide 9</div></div>
       <div class="pos" data-step="4"><span class="t"><small>04 · temp tables</small>Results that outlive the statement</span>
         <div class="code">CREATE TEMPORARY TABLE tmp_de AS<br>&nbsp;&nbsp;SELECT … WHERE ship_country='DE';<br>ANALYZE TABLE tmp_de;</div>
         <div class="note">session-private, no collisions · every later query gets the discount · dropped automatically</div>
-        <div class="m">0.33 s to build · then 27 ms vs 659 ms → slide 8</div></div>
+        <div class="m">0.33 s to build · then 27 ms vs 659 ms → slide 10</div></div>
     </div>
     <div class="arith in" data-step="5">
       scope is the organizing idea — <b>subquery</b> = one value · <b>CTE</b> = one statement · <b>temp table</b> = one session
@@ -206,6 +224,43 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
     <b>ORDER BY orders</b> works fine — it runs at step 6 · chapter 3 turns this pipeline into a tuning tool</div>
   </div></div>
   <div class="foot">1,200,000 → 1,032,479 → 17 → 7 → 3 · every count measured live · the earlier a row dies, the less everything after it costs</div>
+</section>
+
+<!-- 3 · a query inside a query -->
+<section class="slide">
+  <div class="kicker">One level deeper</div>
+  <h2 class="in">A query inside a query</h2>
+  <p class="sub in" style="animation-delay:.1s">A subquery is a full SELECT nested in another. The only question
+  that matters for cost: does it run <em>once</em> — or once <em>per row</em>?</p>
+  <div class="stage"><div style="display:flex; flex-direction:column; gap:16px; align-items:center">
+    <div class="sqwrap">
+      <div class="sqpanel" data-step="1">
+        <div class="cap oncecap">uncorrelated — runs once</div>
+        <div>SELECT COUNT(*) FROM orders<br>
+<b>WHERE</b> total_cents &gt;<br>
+&nbsp;&nbsp;<span class="sqinner">(SELECT AVG(total_cents) FROM orders)</span>;</div>
+        <div class="sqnote" data-step="2">the inner query references <b>nothing outer</b> → MySQL computes it
+        first, once — it collapses to a constant: <b>avg = 743.82</b> — then the outer query runs against that number</div>
+        <div class="planq" data-step="3">EXPLAIN prints it verbatim:<br>-&gt; Select #2 (subquery in condition; <i>run only once</i>)<br>
+        measured result: <i>543,009</i> orders above the mean</div>
+      </div>
+      <div class="sqpanel" data-step="4">
+        <div class="cap percap">correlated — runs per row</div>
+        <div>SELECT c.id,<br>
+&nbsp;&nbsp;<span class="sqinner">(SELECT MAX(o.order_date) FROM orders o<br>
+&nbsp;&nbsp;&nbsp;WHERE o.customer_id = <b>c.id</b>)</span><br>
+FROM customers c;</div>
+        <div class="sqnote" data-step="5">the inner query references <b>c.id</b> — a column of the <b>outer</b> row →
+        it cannot be pre-computed; it re-runs for <b>every one of the 300,000 customers</b> (the plan shows
+        <span class="dkk">loops=300000</span>)</div>
+        <div class="planq" data-step="5">per-probe cost decides everything: on chapter-2's index ~1 µs each
+        — 320 ms total (lab 3.13) · unindexed, the capstone had to <i>kill</i> one of these</div>
+      </div>
+    </div>
+    <div class="arith" data-step="6" style="width:min(1100px,94vw)">the one-look test: read what the inner query <b>references</b> —
+    nothing outer → a constant, computed once · an outer column → a loop, run per row · EXPLAIN tells you which, every time</div>
+  </div></div>
+  <div class="foot">positions (SELECT · WHERE · FROM) and CTEs come in lesson 0.4 — this slide is only about when the inner query runs</div>
 </section>
 
 <!-- 2 -->

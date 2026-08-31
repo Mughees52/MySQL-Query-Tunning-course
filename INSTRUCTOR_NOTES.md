@@ -95,7 +95,9 @@ orders on 2025-06-15, 4,845 SG orders) are stable.
 Optional refresher: joins / subqueries+CTEs / temp tables, MySQL-native.
 Measured anchors: SELECT pipeline (slide 2) 1,200,000 → 1,032,479 completed
 → 17 ship countries → 7 past HAVING(>50k) → top-3 US 309,882 / GB 154,855 /
-DE 102,838; inner vs left join 1,200,000 vs 1,208,266 (+8,266
+DE 102,838; subquery slide (slide 3) avg order value 743.82, 543,009
+above mean, plan text "subquery in condition; run only once";
+inner vs left join 1,200,000 vs 1,208,266 (+8,266
 never-ordered); 5 countries with zero customers (AR BE GR PK SA); 543,009
 orders above mean; CTE regional (SHIP-country grain — deliberately not the
 monster's customer grain); tmp_de 119,605 rows 0.33 s create, 27 ms vs
