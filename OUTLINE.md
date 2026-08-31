@@ -147,4 +147,4 @@ generalized production incident class, fully measured.*
 
 **Totals:** 18 lessons (incl. 3 optional foundations) + the course-introduction lesson · 4 concept checks ·
 44 hands-on exercises · 6 advanced deep dives ·
-capstone woven into Chapter 4.
+capstone woven into Chapter 4 · 42-question quiz bank in `quiz/`.

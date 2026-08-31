@@ -123,6 +123,14 @@ Sans/Mono). All numbers on the slides are the measured reference numbers
 above. Decks respect `prefers-reduced-motion`. Fonts load from Google Fonts
 when online; system fallbacks otherwise.
 
+## Quiz bank
+
+`quiz/` — 42 questions (blueprint in its README): per-chapter sections,
+distractors are the course's documented misconceptions, answers carry the
+measured evidence + verify-SQL. Use as chapter recaps or sample a final exam
+from the blueprint. All error codes/messages asserted (1054, 1055, 1137,
+1739, 3024) were verified against the course container.
+
 ## Deep dives and advanced scenarios
 
 Each chapter lab ends with ⚙ deep-dive exercises (optimizer trace, cost

@@ -59,6 +59,9 @@ Instructor reference (planted traps, measured timings, reset procedure):
 [INSTRUCTOR_NOTES.md](INSTRUCTOR_NOTES.md).
 Recording the course? The shot list, per-video checklist, and ready-to-run
 live-demo scripts: [RECORDING_GUIDE.md](RECORDING_GUIDE.md) + [demos/](demos/).
+Test yourself after each chapter: [quiz/](quiz/) — 42 questions whose wrong
+options are real misconceptions and whose answers you can verify on your own
+container.
 
 ## Getting started
 
