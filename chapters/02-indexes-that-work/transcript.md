@@ -1,7 +1,7 @@
 # Chapter 2 — Indexes That Actually Get Used
 ### Lesson transcripts
 
-> **Rhythm — teach, then do:** lesson 2.1 (slides 1–3) → labs 2.2–2.3 ·
+> **Rhythm — learn, then do:** lesson 2.1 (slides 1–3) → labs 2.2–2.3 ·
 > lesson 2.4 (slides 4–5) → labs 2.5–2.7 · lesson 2.8 (slides 6–8) →
 > labs 2.9–2.14 · deep dives 2.15–2.16.
 

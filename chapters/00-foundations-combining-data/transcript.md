@@ -1,7 +1,7 @@
 # Chapter 0 — Foundations: Combining Data in MySQL
 ### Lesson transcripts
 
-> **Rhythm — teach, then do:** lesson 0.1 (slides 1–7) → labs 0.2–0.3 ·
+> **Rhythm — learn, then do:** lesson 0.1 (slides 1–7) → labs 0.2–0.3 ·
 > lesson 0.4 (slides 8–9) → labs 0.5–0.6 · lesson 0.7 (slides 10–11) →
 > labs 0.8–0.9. Watch the matching deck slides with each lesson, then
 > practice before moving on.

@@ -1,7 +1,7 @@
 # Chapter 4 — The Tuning Workflow: From Ticket to Fix
 ### Lesson transcripts
 
-> **Rhythm — teach, then do:** lesson 4.1 (slides 2–3) → labs 4.2–4.3 ·
+> **Rhythm — learn, then do:** lesson 4.1 (slides 2–3) → labs 4.2–4.3 ·
 > lesson 4.4 (slide 4) → labs 4.5–4.6 · lesson 4.7 (slide 1) → capstone
 > 4.8–4.13 (slide 5 is the journey you produce) · lesson 4.14 (slides 6–7)
 > · deep dive 4.15 · lab 4.16 (the dialect card).

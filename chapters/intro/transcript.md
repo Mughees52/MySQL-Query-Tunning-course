@@ -1,7 +1,7 @@
 # Course Introduction — Improving Query Performance in MySQL 8
 ### Lesson transcript
 
-> **Rhythm — teach, then do:** this intro (slides 1–7) → your one practical:
+> **Rhythm — learn, then do:** this intro (slides 1–7) → your one practical:
 > run `setup/setup.sh`, connect, and verify the row count. Then straight into
 > chapter 0 (constructs refresher) or chapter 1 (the journey of a query).
 
@@ -53,7 +53,7 @@ four hours.
 The data itself: six tables. A tiny `countries` lookup — thirty-two rows.
 Three hundred thousand `customers`. Five thousand `products`. One point two
 million `orders`. Three million `order_items`. About a million `payments`.
-The seed is **deterministic** — every learner gets byte-identical data. Your
+The seed is **deterministic** — you get byte-identical data to mine. Your
 hardware will make your absolute timings differ from the printed ones, but
 the ratios and the plans will match, and that's what matters.
 

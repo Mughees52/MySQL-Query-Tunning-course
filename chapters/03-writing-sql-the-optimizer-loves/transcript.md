@@ -1,7 +1,7 @@
 # Chapter 3 — Writing SQL the Optimizer Loves
 ### Lesson transcripts
 
-> **Rhythm — teach, then do:** lesson 3.1 (slides 1–2) → labs 3.2–3.3 ·
+> **Rhythm — learn, then do:** lesson 3.1 (slides 1–2) → labs 3.2–3.3 ·
 > lesson 3.4 (slides 3–4) → labs 3.5–3.7 · lesson 3.8 (slides 5–6) →
 > labs 3.9–3.10 · lesson 3.11 (slides 7–8) → labs 3.12–3.14 and 3.17 ·
 > deep dives 3.15–3.16.

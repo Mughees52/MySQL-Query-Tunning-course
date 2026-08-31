@@ -1,7 +1,7 @@
 # Chapter 1 — How MySQL Runs Your Query
 ### Lesson transcripts
 
-> **Rhythm — teach, then do:** lesson 1.1 (slides 1–3) → labs 1.2–1.3 ·
+> **Rhythm — learn, then do:** lesson 1.1 (slides 1–3) → labs 1.2–1.3 ·
 > lesson 1.4 (slides 4–5) → labs 1.5–1.7 · lesson 1.8 (slides 6, 8) →
 > lab 1.9 · lesson 1.10 (slide 7) → labs 1.11–1.13 · deep dive 1.14.
 

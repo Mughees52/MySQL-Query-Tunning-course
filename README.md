@@ -37,7 +37,7 @@ FULL OUTER JOIN and the temp-table reopen error — then hands you to ch. 1.)
 
 | Chapter | Title | You will learn |
 |---|---|---|
-| Intro | **Course Introduction** | The UrbanCart scene, the dataset and its planted traps, the five-chapter arc, the teach-then-do method, setup — start here |
+| Intro | **Course Introduction** | The UrbanCart scene, the dataset and its planted traps, the five-chapter arc, the learn-then-do method, setup — start here |
 | 0 *(optional)* | **Foundations: Combining Data** | Joins (INNER/LEFT, and the FULL OUTER JOIN MySQL doesn't have), subqueries in three positions, CTEs, temp tables and the reopen error — skip if fluent |
 | 1 | **How MySQL Runs Your Query** | Query lifecycle, InnoDB clustered index, reading `EXPLAIN` and `EXPLAIN ANALYZE`, slow query log, sys schema, building a baseline scorecard |
 | 2 | **Indexes That Actually Get Used** | Secondary indexes, selectivity, composite & covering indexes, leftmost-prefix rule, the five classic ways an index gets ignored, histograms, invisible indexes |
@@ -70,8 +70,8 @@ cd setup
 ```
 
 This starts a MySQL 8 container on port **3307** (so it won't collide with a
-local MySQL) and seeds the dataset deterministically — every learner gets
-byte-identical data, so your numbers will be close to the ones printed in the
+local MySQL) and seeds the dataset deterministically — you get byte-identical
+data, so your numbers will be close to the ones printed in the
 transcripts (hardware varies; ratios should match).
 
 Connect:
@@ -100,7 +100,7 @@ Each `chapters/NN-*/` directory contains:
 - `lab_starter.sql` — the same starter queries, runnable.
 - `solutions.sql` — full solutions, annotated with the measured timings.
 
-**Work in the teach-then-do rhythm** (each transcript opens with its map):
+**Work in the learn-then-do rhythm** (each transcript opens with its map):
 watch/read one lesson with its deck slides, then immediately do that
 lesson's exercises before the next lesson — concepts stick when the
 practical follows within minutes. Do the lessons in order — later chapters

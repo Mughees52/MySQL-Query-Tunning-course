@@ -9,7 +9,7 @@
 ## Course Introduction
 
 *The scene (UrbanCart and its index-free schema), the dataset, the five-chapter
-arc, the teach-then-do method, the measured-honesty rule, and setup.
+arc, the learn-then-do method, the measured-honesty rule, and setup.
 Transcript: `chapters/intro/transcript.md` · deck: `slides/intro-slides.html`.*
 
 | # | Type | Title |
