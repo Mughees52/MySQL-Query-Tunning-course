@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch 4 · The Tuning Workflow — Slides</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#f2f1ef; --ink:#212121; --dim:#6d6c68;
+  --card:#ffffff; --line:rgba(33,33,33,.14);
+  --dark:#212121; --dark-ink:#f2f1ef; --dark-dim:#9b9a96; --dark-line:rgba(242,241,239,.16);
+  --blue:#0000ee; --sky:#3f9de0; --ok:#1d8048; --bad:#c93b2b;
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0; background:var(--paper); color:var(--ink); overflow:hidden;
+  font-family:"IBM Plex Sans",system-ui,sans-serif}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.deck{height:100%; position:relative}
+.slide{position:absolute; inset:0; padding:6vh 7vw; display:none; flex-direction:column}
+.slide.active{display:flex}
+.kicker{font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--blue); font-weight:600; margin-bottom:14px}
+h1{font-weight:500; font-size:clamp(34px,5.2vw,64px); line-height:1.02; margin:0 0 12px;
+  letter-spacing:-.03em; text-wrap:balance}
+h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spacing:-.025em; text-wrap:balance}
+.sub{color:var(--dim); font-size:clamp(15px,1.6vw,19px); max-width:66ch; margin:0 0 3vh}
+.stage{flex:1; display:flex; align-items:center; justify-content:center; min-height:0}
+.foot{color:var(--dim); font-size:13px; font-family:"IBM Plex Mono",monospace; margin-top:2vh}
+.hl-u{color:var(--blue)} .hl-s{color:var(--sky)} .hl-g{color:var(--ok)} .hl-b{color:var(--bad)}
+.dk-dim{color:var(--dark-dim)} .dk-sky{color:var(--sky)} .dk-bad{color:#e88a7d} .dk-ok{color:#6cc99a}
+.slide .in{opacity:0; transform:translateY(10px)}
+.slide.active .in{animation:rise .5s ease-out forwards}
+@keyframes rise{to{opacity:1; transform:none}}
+.hud{position:fixed; left:0; right:0; bottom:0; display:flex; align-items:center; gap:14px;
+  padding:10px 18px; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim)}
+.hud .bar{flex:1; height:2px; background:var(--line)} .hud .bar i{display:block; height:2px; background:var(--blue); width:0; transition:width .25s}
+
+/* slide 1: the ticket */
+.ticket{background:var(--card); border:1px solid var(--line); border-left:4px solid var(--bad);
+  border-radius:10px; padding:24px 28px; width:min(720px,84vw)}
+.ticket .th{display:flex; gap:14px; align-items:baseline; font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--dim)}
+.ticket .th b{color:var(--bad)}
+.ticket .body{margin-top:12px; font-size:clamp(15px,1.8vw,19px); line-height:1.6}
+.ticket .sig{margin-top:12px; color:var(--dim); font-size:14px}
+
+/* slide 2: loop */
+.loop{position:relative; width:min(620px,74vw); aspect-ratio:1.9}
+.lnode{position:absolute; background:var(--card); border:1px solid var(--line); border-radius:9px;
+  padding:10px 14px; font-size:clamp(12px,1.4vw,15px); font-weight:600; white-space:nowrap;
+  transform:translate(-50%,-50%)}
+.lnode small{display:block; font-weight:400; color:var(--dim); font-size:.8em}
+.lnode.stop{background:var(--dark); color:var(--dark-ink); border-color:var(--dark)}
+.slide.active .lnode{opacity:0; animation:rise .4s ease-out forwards}
+.slide.active .ln1{animation-delay:.2s}.slide.active .ln2{animation-delay:.55s}
+.slide.active .ln3{animation-delay:.9s}.slide.active .ln4{animation-delay:1.25s}
+.slide.active .ln5{animation-delay:1.6s}.slide.active .ln6{animation-delay:2.1s}
+.loopsvg{position:absolute; inset:0; width:100%; height:100%}
+.loopsvg path{fill:none; stroke:var(--blue); stroke-width:1.6; stroke-dasharray:6 7; opacity:0}
+.slide.active .loopsvg path{animation:rise .6s ease-out .2s forwards}
+
+/* slide 3: time x loops */
+.planbig{font-family:"IBM Plex Mono",monospace; font-size:clamp(11.5px,1.35vw,15px);
+  background:var(--dark); color:var(--dark-ink); border-radius:12px; padding:22px 26px;
+  line-height:2.0; width:min(940px,90vw)}
+.planbig .l1{padding-left:2em}.planbig .l2{padding-left:4em}
+.hlrow{border-radius:5px; padding:0 6px}
+.slide.active .hlrow{animation:spotlight .6s ease-out .8s forwards}
+@keyframes spotlight{to{background:rgba(63,157,224,.22); box-shadow:0 0 0 1.5px var(--sky)}}
+.mathline{margin-top:14px; font-family:"IBM Plex Mono",monospace; font-size:clamp(13px,1.6vw,17px)}
+
+/* slide 4: offset vs keyset */
+.pag{display:grid; grid-template-columns:1fr 1fr; gap:4vw; width:min(1040px,90vw)}
+.panelbox{background:var(--dark); color:var(--dark-ink); border-radius:12px; padding:22px 24px; overflow:hidden}
+.panelbox h3{margin:0 0 4px; font-weight:600; font-size:18px}
+.panelbox .m{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--dark-dim); margin-bottom:16px}
+.beltwrap{position:relative; height:34px; border:1px solid var(--dark-line); border-radius:6px; overflow:hidden}
+.belt{position:absolute; top:4px; left:0; display:flex; gap:4px; will-change:transform}
+.bcell{width:22px; height:24px; flex:none; border:1px solid var(--dark-line); border-radius:3px;
+  background:rgba(232,138,125,.25)}
+.bcell.kept{background:rgba(108,201,154,.55)}
+.slide.active .belt{animation:beltmove 3.2s linear .4s forwards}
+@keyframes beltmove{to{transform:translateX(-72%)}}
+.seekwrap{position:relative; height:34px; border:1px solid var(--dark-line); border-radius:6px}
+.seekptr{position:absolute; top:-26px; left:2%; font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--sky); opacity:0}
+.slide.active .seekptr{animation:seekjump 1s ease-in-out .6s forwards}
+@keyframes seekjump{0%{opacity:1; left:2%} 100%{opacity:1; left:78%}}
+.seekrow{position:absolute; top:4px; right:6px; display:flex; gap:4px}
+.scell{width:22px; height:24px; border:1px solid var(--dark-line); border-radius:3px; opacity:0}
+.slide.active .scell{animation:probe2 .3s ease-out forwards}
+.slide.active .scell:nth-child(1){animation-delay:1.5s}.slide.active .scell:nth-child(2){animation-delay:1.62s}
+.slide.active .scell:nth-child(3){animation-delay:1.74s}.slide.active .scell:nth-child(4){animation-delay:1.86s}
+@keyframes probe2{to{opacity:1; background:rgba(108,201,154,.55)}}
+.pverdict{margin-top:14px; font-family:"IBM Plex Mono",monospace; font-size:13.5px}
+
+/* slide 5: capstone timeline */
+.cap{width:min(920px,90vw)}
+.cr{display:grid; grid-template-columns:56px 1fr 300px; align-items:center; gap:14px; margin:9px 0;
+  font-family:"IBM Plex Mono",monospace}
+.cr .v{font-weight:600; font-size:13.5px}
+.cr .cbarw{height:22px; border-radius:4px; background:var(--card); border:1px solid var(--line); overflow:hidden}
+.cr .cbar{height:100%; width:0; border-radius:3px; background:var(--sky)}
+.cr.dead .cbar{background:var(--bad)}
+.cr.ship .cbar{background:var(--ok)}
+.cr .what{font-size:12px; color:var(--dim)}
+.cr .what b{color:var(--ink); font-weight:600}
+.slide.active .cb0{animation:cw100 .9s ease-out .15s forwards} .slide.active .cb1{animation:cw92 .9s ease-out .15s forwards}
+.slide.active .cb2{animation:cw55 .9s ease-out .15s forwards} .slide.active .cb3{animation:cw34 .9s ease-out .15s forwards}
+.slide.active .cb4{animation:cw34 .9s ease-out .15s forwards} .slide.active .cb5{animation:cw31 .9s ease-out .15s forwards}
+.slide.active .cb6{animation:cw29 .9s ease-out .15s forwards}
+/* log scale: 21min=1260s → 100% · 600s 92% · 8.85s 55% · 1.64s 34% · 1.34s 31% · 1.14s 29% */
+@keyframes cw100{to{width:100%}} @keyframes cw92{to{width:92%}} @keyframes cw55{to{width:55%}}
+@keyframes cw34{to{width:34%}} @keyframes cw31{to{width:31%}} @keyframes cw29{to{width:29%}}
+.logn{font-size:11px; color:var(--dim); text-align:right; font-family:"IBM Plex Mono",monospace; margin-top:4px}
+
+/* slide 6: stop */
+.stopcard{background:var(--dark); color:var(--dark-ink); border-radius:12px; padding:30px 34px; width:min(760px,84vw)}
+.stopcard .q{font-size:clamp(17px,2.2vw,23px); line-height:1.5; font-weight:500; letter-spacing:-.01em}
+.stopcard .a{margin-top:18px; font-size:clamp(14px,1.7vw,17px); color:var(--dark-dim); line-height:1.6; opacity:0}
+.slide.active .stopcard .a{animation:rise .5s ease-out 1.4s forwards}
+.stopcard .a b{color:#6cc99a}
+
+/* slide 7: checklist */
+.check{display:grid; grid-template-columns:1fr 1fr; gap:14px; width:min(1000px,90vw)}
+.ck{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 20px}
+.ck .t{font-weight:600; font-size:16px; color:var(--blue)}
+.ck .d{color:var(--dim); font-size:13.5px; margin-top:5px; line-height:1.55}
+.slide.active .ck{opacity:0; animation:rise .4s ease-out forwards}
+.slide.active .ck:nth-child(1){animation-delay:.15s}.slide.active .ck:nth-child(2){animation-delay:.35s}
+.slide.active .ck:nth-child(3){animation-delay:.55s}.slide.active .ck:nth-child(4){animation-delay:.75s}
+.slide.active .ck:nth-child(5){animation-delay:.95s}.slide.active .ck:nth-child(6){animation-delay:1.15s}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important; transition:none !important}
+  .slide .in,.slide.active .lnode,.slide.active .ck,.slide.active .scell,.slide.active .seekptr,
+  .slide.active .loopsvg path,.stopcard .a{opacity:1 !important; transform:none}
+  .cr .cbar{width:40%}
+}
+
+/* presenter-paced builds: elements marked data-step appear one keypress at a time */
+.slide [data-step]:not(.on), .slide [data-step]:not(.on) *{animation:none !important}
+.slide [data-step]:not(.on){opacity:0 !important}
+.slide [data-step].on{animation-delay:0s !important}
+.arc{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px 24px; width:min(420px,86vw)}
+.arc .h{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--blue); font-weight:600; margin-bottom:8px}
+.arc .row{display:flex; justify-content:space-between; gap:14px; font-family:"IBM Plex Mono",monospace;
+  font-size:clamp(12.5px,1.4vw,15px); padding:4px 0; border-bottom:1px dashed var(--line); font-variant-numeric:tabular-nums}
+.arc .row:last-of-type{border-bottom:0}
+.arc .loopline{font-size:clamp(12.5px,1.4vw,15px); color:var(--dim); margin-top:10px; line-height:1.6}
+.arc .loopline b{color:var(--ink); font-weight:600}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- 1 -->
+<section class="slide active">
+  <div class="kicker">Improving Query Performance in MySQL 8 · Chapter 4</div>
+  <h1 class="in">From ticket <span class="hl-u">to fix</span></h1>
+  <p class="sub in" style="animation-delay:.15s">Everything you've learned, run as one repeatable workflow — on a
+  query that couldn't even be measured.</p>
+  <div class="stage">
+    <div class="ticket in" data-step="1">
+      <div class="th"><b>DD-4187 · PRIORITY: HIGH</b><span>reporter: Dana (eng manager)</span></div>
+      <div class="body">The country dashboard has been "loading…" since the data grew. Marketing demoed
+      it to the CEO this morning; it never finished. On staging we gave up and
+      <b>killed the query after 20 minutes</b>. It must render in <b>under two seconds</b>. Fix it by Friday.</div>
+      <div class="sig">constraints: identical results, one change per commit, measured time in every commit message</div>
+    </div>
+    <div class="arc" data-step="2">
+      <div class="h">where this chapter takes it</div>
+      <div class="row"><span>v0 · as found</span><span class="hl-b">killed at 21 min</span></div>
+      <div class="row"><span>v2 · first finish</span><span>8.85 s</span></div>
+      <div class="row"><span>v6 · shipped</span><span class="hl-g">1.14 s</span></div>
+      <div class="row"><span>identity proof</span><span>diff clean, 17 rows</span></div>
+      <div class="loopline">via one repeatable loop: <b>reproduce → measure → read the plan → change ONE thing → verify → stop on purpose</b></div>
+    </div>
+  </div>
+  <div class="foot">capstone/ticket.md · dashboard_v0.sql — five sins, all yours to find</div>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <div class="kicker">The discipline</div>
+  <h2 class="in">The tuning loop</h2>
+  <p class="sub in" style="animation-delay:.1s">Every successful session follows it; every disaster skipped a step.</p>
+  <div class="stage">
+    <div class="loop">
+      <svg class="loopsvg" data-step="6" viewBox="0 0 620 320" aria-hidden="true">
+        <path d="M 120 60 H 300 M 380 60 H 490 M 520 90 V 150 M 490 210 H 380 M 300 210 H 150 M 110 180 V 100"/>
+      </svg>
+      <div class="lnode ln1" data-step="1" style="left:14%; top:19%">1 · Reproduce<small>exact query, exact literals</small></div>
+      <div class="lnode ln2" data-step="2" style="left:55%; top:19%">2 · Measure<small>warm · save the result set</small></div>
+      <div class="lnode ln3" data-step="3" style="left:84%; top:56%">3 · Read the plan<small>time × loops → worst node</small></div>
+      <div class="lnode ln4" data-step="4" style="left:55%; top:84%">4 · Change ONE thing<small>helped? keep : revert</small></div>
+      <div class="lnode ln5" data-step="5" style="left:16%; top:84%">5 · Verify identity<small>diff against the oracle</small></div>
+      <div class="lnode ln6 stop" data-step="6" style="left:14%; top:52%">requirement met?<small>stop on purpose</small></div>
+    </div>
+  </div>
+  <div class="foot">"fast enough" is a requirement, not a feeling — under two seconds ends this session; "make it fast" never does</div>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <div class="kicker">Reading big plans</div>
+  <h2 class="in">Cost of a node ≈ actual time × loops</h2>
+  <p class="sub in" style="animation-delay:.1s">Scary flags aren't automatically the problem. Multiply, then judge.</p>
+  <div class="stage"><div>
+    <div class="planbig" data-step="1">
+      -&gt; Sort: rev DESC, limit 10 &nbsp;<span class="dk-dim">(actual time=1348 rows=10)</span> <span class="dk-dim">← "Using filesort"… of 30 rows</span><br>
+      <span class="l1">-&gt; Aggregate using temporary table &nbsp;<span class="dk-dim">(actual time=1345 rows=30)</span></span><br>
+      <span class="l1">-&gt; Nested loop inner join &nbsp;<span class="dk-dim">(actual …1214 rows=1.03e6)</span></span><br>
+      <span class="l2">-&gt; Index lookup on o (status='completed') &nbsp;<span class="dk-dim">(actual …436 rows=1.03e6)</span></span><br>
+      <span class="l2 hlrow">-&gt; Single-row PK lookup on c &nbsp;<span class="dk-sky">(actual 0.7 µs … loops=1.03e6)</span></span>
+    </div>
+    <div class="mathline in" data-step="2">0.7 µs × 1,030,000 loops ≈ <b class="hl-s">0.7 s</b> — the innocent-looking line is the bill</div>
+  </div></div>
+  <div class="foot">the Sort node everyone fears: 30 rows, ~0 ms · exercise 4.2</div>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <div class="kicker">Architecture is query design</div>
+  <h2 class="in">Deep pagination: treadmill vs. seek</h2>
+  <p class="sub in" style="animation-delay:.1s">Page 50,001 of the orders admin, 20 rows per page.</p>
+  <div class="stage">
+    <div class="pag">
+      <div class="panelbox" data-step="1">
+        <h3 class="dk-bad">LIMIT 20 OFFSET 1000000</h3>
+        <div class="m">walk 1,000,020 entries · discard 1,000,000</div>
+        <div class="beltwrap"><div class="belt" id="belt"></div></div>
+        <div class="pverdict dk-bad">67 ms — and it grows with every page</div>
+      </div>
+      <div class="panelbox" data-step="2">
+        <h3 class="dk-ok">WHERE id &gt; 1000000 LIMIT 20</h3>
+        <div class="m">keyset: remember where the last page ended, seek there</div>
+        <div class="seekwrap"><span class="seekptr">──── seek ────▶</span>
+          <div class="seekrow"><div class="scell"></div><div class="scell"></div><div class="scell"></div><div class="scell"></div></div>
+        </div>
+        <div class="pverdict dk-ok">0.045 ms — constant at any depth · 1,500×</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">every infinite-scroll feed is keyset pagination in a trench coat · the trade: no "jump to page 7,349"</div>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <div class="kicker">Ticket DD-4187 · six verified steps</div>
+  <h2 class="in">The rescue, measured</h2>
+  <div class="stage">
+    <div class="cap">
+      <div class="cr dead" data-step="1"><span class="v">v0</span><div class="cbarw"><div class="cbar cb0"></div></div><span class="what"><b>killed at 21 min</b> — as found</span></div>
+      <div class="cr dead" data-step="2"><span class="v">v1</span><div class="cbarw"><div class="cbar cb1"></div></div><span class="what"><b>&gt;10 min</b> sargable dates — right, not enough</span></div>
+      <div class="cr" data-step="3"><span class="v">v2</span><div class="cbarw"><div class="cbar cb2"></div></div><span class="what"><b>8.85 s</b> + idx_items_order — first finish, oracle</span></div>
+      <div class="cr" data-step="4"><span class="v">v3</span><div class="cbarw"><div class="cbar cb3"></div></div><span class="what"><b>1.64 s</b> 17 subqueries → one windowed pass</span></div>
+      <div class="cr" data-step="5"><span class="v">v4</span><div class="cbarw"><div class="cbar cb4"></div></div><span class="what"><b>1.64 s</b> NOT IN → NOT EXISTS — same plan, bought safety</span></div>
+      <div class="cr" data-step="6"><span class="v">v5</span><div class="cbarw"><div class="cbar cb5"></div></div><span class="what"><b>1.34 s</b> order grain — outer items join deleted</span></div>
+      <div class="cr ship" data-step="7"><span class="v">v6</span><div class="cbarw"><div class="cbar cb6"></div></div><span class="what"><b>1.14 s</b> plan review: skew index + agg-before-join · <b>ship</b></span></div>
+      <div class="logn" data-step="7">bar length is log-scale — v0→v6 is over 1,000×</div>
+    </div>
+  </div>
+  <div class="foot">identity diffed at every step from v2 on · 17 rows, byte-identical, every time</div>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <div class="kicker">Lesson 4.6</div>
+  <h2 class="in">When do you stop?</h2>
+  <div class="stage">
+    <div class="stopcard" data-step="1">
+      <div class="q">Requirement: &lt; 2 s. You're at 1.14 s. Two more optimizations would buy
+      ~0.4 s — one adds a four-column index, the other a join hint. Take them?</div>
+      <div class="a" data-step="2"><b>No — ship it.</b> Each further change adds write cost, fragility, and review surface
+      for latency nobody asked for. Write both ideas in the ticket for the day the requirement
+      tightens. Tuning without a stop condition is how databases accumulate 40 indexes and
+      200 hints nobody dares remove.</div>
+    </div>
+  </div>
+  <div class="foot">caveat: requirements are distributions — a fine p50 with a terrible p99 is a different conversation</div>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <div class="kicker">Course wrap-up</div>
+  <h2 class="in">Your tuning checklist</h2>
+  <div class="stage">
+    <div class="check">
+      <div class="ck" data-step="1"><div class="t">Find the target</div><div class="d">slow log + sys.statement_analysis · pick by frequency × duration · smell: rows examined ≫ rows sent</div></div>
+      <div class="ck" data-step="2"><div class="t">Measure honestly</div><div class="d">warm cache, run twice, write it down, save the result set · EXPLAIN ANALYZE, not vibes</div></div>
+      <div class="ck" data-step="3"><div class="t">Access paths first</div><div class="d">seeks not scans · bare columns in predicates · equality→range composite order · covering for the hot few · retire redundant indexes invisible-first</div></div>
+      <div class="ck" data-step="4"><div class="t">Then shape</div><div class="d">filter early, project late · right grain before aggregating · IN not cross-column OR · NOT EXISTS not NOT IN · LEFT-join filters in ON</div></div>
+      <div class="ck" data-step="5"><div class="t">Then the optimizer's worldview</div><div class="d">est vs actual gaps · histograms on skewed filter columns · hints as documented, dated, last-resort bets</div></div>
+      <div class="ck" data-step="6"><div class="t">Then architecture</div><div class="d">keyset pagination · summary tables and denormalized totals when query tuning has done its job · stop at the requirement</div></div>
+    </div>
+  </div>
+  <div class="foot">45 ms → 9 µs · 4 s → 1.5 s · killed-at-21-min → 1.14 s — same data, same hardware, different engineer</div>
+</section>
+
+</div>
+<div class="hud"><span id="counter">1 / 7</span><div class="bar"><i id="prog"></i></div><span>→ build / next · ← undo / back</span></div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];
+const counter=document.getElementById('counter'), prog=document.getElementById('prog');
+let i=0;
+// offset belt: 90 cells, last 4 kept
+const belt=document.getElementById('belt');
+for(let k=0;k<90;k++){const c=document.createElement('div');c.className='bcell'+(k>=86?' kept':'');belt.appendChild(c);}
+const stepsOf=s=>[...new Set([...s.querySelectorAll('[data-step]')].map(e=>+e.dataset.step))].sort((a,b)=>a-b);
+const isOn=(s,n)=>{const e=s.querySelector('[data-step="'+n+'"]');return e&&e.classList.contains('on');};
+function paint(){
+  const s=slides[i], st=stepsOf(s);
+  const done=st.filter(n=>isOn(s,n)).length;
+  counter.textContent=(i+1)+' / '+slides.length+(st.length?(' · build '+done+'/'+st.length):'');
+  prog.style.width=((i+1)/slides.length*100)+'%';
+}
+function setSlide(n, revealAll){
+  i=Math.max(0,Math.min(slides.length-1,n));
+  slides.forEach((s,k)=>{
+    if(k===i && !s.classList.contains('active')){s.classList.remove('active'); void s.offsetWidth;}
+    s.classList.toggle('active',k===i);
+  });
+  slides[i].querySelectorAll('[data-step]').forEach(e=>e.classList.toggle('on', !!revealAll));
+  paint();
+}
+function next(){
+  const s=slides[i], st=stepsOf(s);
+  const pending=st.find(n=>!isOn(s,n));
+  if(pending!==undefined){
+    [...s.querySelectorAll('[data-step="'+pending+'"]')].forEach((e,k)=>setTimeout(()=>e.classList.add('on'),k*120));
+    setTimeout(paint,20);
+  } else if(i<slides.length-1) setSlide(i+1,false);
+}
+function prev(){
+  const s=slides[i];
+  const lastOn=stepsOf(s).reverse().find(n=>isOn(s,n));
+  if(lastOn!==undefined){s.querySelectorAll('[data-step="'+lastOn+'"]').forEach(e=>e.classList.remove('on'));paint();}
+  else if(i>0) setSlide(i-1,true);
+}
+addEventListener('keydown',e=>{
+  if(['ArrowRight',' ','PageDown','ArrowDown'].includes(e.key)){e.preventDefault();next();}
+  else if(['ArrowLeft','PageUp','ArrowUp'].includes(e.key)){e.preventDefault();prev();}
+  else if(e.key==='Home')setSlide(0,false); else if(e.key==='End')setSlide(slides.length-1,true);
+});
+addEventListener('click',e=>{ if(e.clientX>innerWidth/2)next(); else prev(); });
+setSlide(0,false);
+</script>
+</body>
+</html>

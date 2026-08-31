@@ -1,0 +1,22 @@
+services:
+  mysql-tuning-course:
+    image: mysql:8
+    container_name: mysql-tuning-course
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: course
+      MYSQL_DATABASE: urbancart
+    command:
+      # 1G buffer pool: the whole dataset fits in memory, so timings are
+      # repeatable and you are measuring query shape, not disk luck.
+      - --innodb-buffer-pool-size=1G
+      # Slow query log on from day one - Chapter 1 uses it.
+      - --slow-query-log=ON
+      - --slow-query-log-file=/var/lib/mysql/slow.log
+      - --long-query-time=0.5
+    volumes:
+      - mysql-tuning-data:/var/lib/mysql
+
+volumes:
+  mysql-tuning-data:

@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ch 3 · Writing SQL the Optimizer Loves — Slides</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#f2f1ef; --ink:#212121; --dim:#6d6c68;
+  --card:#ffffff; --line:rgba(33,33,33,.14);
+  --dark:#212121; --dark-ink:#f2f1ef; --dark-dim:#9b9a96; --dark-line:rgba(242,241,239,.16);
+  --blue:#0000ee; --sky:#3f9de0; --ok:#1d8048; --bad:#c93b2b;
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0; background:var(--paper); color:var(--ink); overflow:hidden;
+  font-family:"IBM Plex Sans",system-ui,sans-serif}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.deck{height:100%; position:relative}
+.slide{position:absolute; inset:0; padding:6vh 7vw; display:none; flex-direction:column}
+.slide.active{display:flex}
+.kicker{font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--blue); font-weight:600; margin-bottom:14px}
+h1{font-weight:500; font-size:clamp(34px,5.2vw,64px); line-height:1.02; margin:0 0 12px;
+  letter-spacing:-.03em; text-wrap:balance}
+h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spacing:-.025em; text-wrap:balance}
+.sub{color:var(--dim); font-size:clamp(15px,1.6vw,19px); max-width:66ch; margin:0 0 3vh}
+.stage{flex:1; display:flex; align-items:center; justify-content:center; min-height:0}
+.foot{color:var(--dim); font-size:13px; font-family:"IBM Plex Mono",monospace; margin-top:2vh}
+.hl-u{color:var(--blue)} .hl-s{color:var(--sky)} .hl-g{color:var(--ok)} .hl-b{color:var(--bad)}
+.dk-dim{color:var(--dark-dim)} .dk-sky{color:var(--sky)} .dk-bad{color:#e88a7d} .dk-ok{color:#6cc99a}
+.slide .in{opacity:0; transform:translateY(10px)}
+.slide.active .in{animation:rise .5s ease-out forwards}
+@keyframes rise{to{opacity:1; transform:none}}
+.hud{position:fixed; left:0; right:0; bottom:0; display:flex; align-items:center; gap:14px;
+  padding:10px 18px; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim)}
+.hud .bar{flex:1; height:2px; background:var(--line)} .hud .bar i{display:block; height:2px; background:var(--blue); width:0; transition:width .25s}
+
+/* slide 2: order of operations */
+.oop{display:flex; flex-direction:column; gap:8px; width:min(760px,84vw)}
+.op{display:grid; grid-template-columns:150px 1fr 190px; gap:14px; align-items:center;
+  background:var(--card); border:1px solid var(--line); border-radius:8px; padding:9px 16px}
+.op .k{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:14px}
+.op .d{color:var(--dim); font-size:13px}
+.op .rows{font-family:"IBM Plex Mono",monospace; font-size:12.5px; text-align:right; color:var(--sky); font-variant-numeric:tabular-nums}
+.slide.active .op{opacity:0; animation:rise .32s ease-out forwards}
+.slide.active .op:nth-child(1){animation-delay:.15s}.slide.active .op:nth-child(2){animation-delay:.4s}
+.slide.active .op:nth-child(3){animation-delay:.65s}.slide.active .op:nth-child(4){animation-delay:.9s}
+.slide.active .op:nth-child(5){animation-delay:1.15s}.slide.active .op:nth-child(6){animation-delay:1.4s}
+.slide.active .op:nth-child(7){animation-delay:1.65s}
+.slide.active .op:nth-child(8){animation-delay:1.9s}
+
+/* slide 3: filter shapes race */
+.race{width:min(860px,86vw)}
+.rr{display:grid; grid-template-columns:290px 1fr 110px; align-items:center; gap:14px; margin:13px 0}
+.rr .lab{font-family:"IBM Plex Mono",monospace; font-size:13px}
+.rr .lab small{display:block; color:var(--dim); font-size:11.5px}
+.rr .barwrap{background:var(--card); border:1px solid var(--line); border-radius:5px; height:24px; overflow:hidden}
+.rr .rbar{height:100%; width:0; border-radius:4px}
+.rr .num{font-family:"IBM Plex Mono",monospace; font-size:13.5px; text-align:right; font-variant-numeric:tabular-nums}
+.slide.active .rb1{background:var(--ok); animation:wtiny 1s ease-out .15s forwards}
+.slide.active .rb2{background:var(--bad); animation:wfull 1.4s ease-out .15s forwards}
+.slide.active .rb3{background:var(--ok); animation:wtiny 1s ease-out .15s forwards}
+.slide.active .rb4{background:var(--bad); animation:w90 1.4s ease-out .15s forwards}
+@keyframes wtiny{to{width:4px}} @keyframes wfull{to{width:100%}} @keyframes w90{to{width:90%}}
+
+/* slide 4: null bomb */
+.bomb{display:grid; grid-template-columns:1fr 1fr; gap:4vw; width:min(1000px,90vw)}
+.panelbox{background:var(--dark); color:var(--dark-ink); border-radius:12px; padding:22px 24px}
+.panelbox h3{margin:0 0 4px; font-weight:600; font-size:18px}
+.panelbox .m{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--dark-dim); margin-bottom:14px}
+.chips{display:flex; flex-wrap:wrap; gap:8px}
+.chip{font-family:"IBM Plex Mono",monospace; font-size:13px; border:1px solid var(--dark-line);
+  border-radius:6px; padding:5px 10px}
+.chip.null{border-color:#e88a7d; color:#e88a7d}
+.slide.active .poison .chip:not(.null){animation:poisonc .5s ease-out forwards}
+.slide.active .poison .chip:nth-child(1){animation-delay:1.2s}
+.slide.active .poison .chip:nth-child(2){animation-delay:1.4s}
+.slide.active .poison .chip:nth-child(4){animation-delay:1.6s}
+.slide.active .poison .chip:nth-child(5){animation-delay:1.8s}
+@keyframes poisonc{to{opacity:.25; text-decoration:line-through}}
+.bombout{margin-top:16px; font-family:"IBM Plex Mono",monospace; font-size:14px}
+.slide.active .bo1{opacity:0; animation:rise .4s ease-out .8s forwards}
+.slide.active .bo2{opacity:0; animation:rise .4s ease-out .8s forwards}
+
+/* slide 5: joins */
+.joins{display:grid; grid-template-columns:1fr 1fr; gap:4vw; width:min(1060px,90vw)}
+.loopviz{position:relative; height:150px; margin-top:8px}
+.lrow{position:absolute; left:0; width:44%; height:22px; border:1px solid var(--dark-line); border-radius:4px;
+  font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--dark-dim); display:flex; align-items:center; padding:0 8px}
+.rtree{position:absolute; right:0; top:22px; width:40%; height:96px; border:1px solid var(--dark-line); border-radius:8px;
+  display:flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--dark-dim); text-align:center}
+.ldart{position:absolute; left:45%; width:10%; text-align:center; color:var(--sky); opacity:0; font-size:15px}
+.slide.active .ldart{animation:dartgo .5s ease-out forwards}
+.hashviz{margin-top:8px}
+.hbox{border:1.5px solid var(--sky); border-radius:8px; padding:10px 12px; font-family:"IBM Plex Mono",monospace;
+  font-size:11.5px; color:var(--sky); width:fit-content; opacity:0}
+.slide.active .hbox{animation:rise .5s ease-out .6s forwards}
+.probe{display:flex; gap:5px; margin-top:14px}
+.pr{width:22px; height:16px; border:1px solid var(--dark-line); border-radius:3px; opacity:0}
+.slide.active .pr{animation:probe1 .35s ease-out forwards}
+@keyframes dartgo{to{opacity:1}}
+@keyframes probe1{to{opacity:1; background:rgba(108,201,154,.35)}}
+.jverdict{margin-top:14px; font-family:"IBM Plex Mono",monospace; font-size:13.5px}
+
+/* slide 6: ON vs WHERE */
+.onwhere{display:grid; grid-template-columns:1fr 1fr; gap:4vw; width:min(980px,88vw)}
+.rowsviz{display:flex; flex-wrap:wrap; gap:4px; margin-top:10px}
+.orow{width:26px; height:16px; border-radius:3px; background:rgba(63,157,224,.35); border:1px solid var(--dark-line)}
+.orow.pay{background:rgba(108,201,154,.5)}
+.slide.active .vanish .orow:not(.pay){animation:gone .5s ease-out forwards}
+.slide.active .vanish .orow:nth-child(odd){animation-delay:1.1s}
+.slide.active .vanish .orow:nth-child(even){animation-delay:1.35s}
+@keyframes gone{to{opacity:.12; transform:scale(.7)}}
+.ow-count{margin-top:14px; font-family:"IBM Plex Mono",monospace; font-size:14px}
+
+/* slide 7: grain */
+.grain{display:grid; grid-template-columns:1fr 1fr; gap:4vw; width:min(1040px,90vw)}
+.flow{display:flex; flex-direction:column; gap:10px; margin-top:6px}
+.fnode{border:1px solid var(--dark-line); border-radius:7px; padding:8px 12px;
+  font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dark-ink); position:relative}
+.fnode small{color:var(--dark-dim)}
+.fnode.wide{border-color:#e88a7d}
+.slide.active .fnode{opacity:0; animation:rise .35s ease-out forwards}
+.slide.active .flow .fnode:nth-child(1){animation-delay:.3s}
+.slide.active .flow .fnode:nth-child(2){animation-delay:.65s}
+.slide.active .flow .fnode:nth-child(3){animation-delay:1.0s}
+.slide.active .flow .fnode:nth-child(4){animation-delay:1.35s}
+.gverdict{margin-top:14px; font-family:"IBM Plex Mono",monospace; font-size:13.5px}
+
+/* slide 8: three shapes podium */
+.podium{width:min(840px,86vw)}
+.pd{display:grid; grid-template-columns:300px 1fr 110px; align-items:center; gap:14px; margin:13px 0}
+.pd .lab{font-family:"IBM Plex Mono",monospace; font-size:13px}
+.pd .lab small{display:block; color:var(--dim); font-size:11.5px}
+.pd .barwrap{background:var(--card); border:1px solid var(--line); border-radius:5px; height:24px; overflow:hidden}
+.pd .pbar{height:100%; width:0; border-radius:4px}
+.pd .num{font-family:"IBM Plex Mono",monospace; font-size:13.5px; text-align:right; font-variant-numeric:tabular-nums}
+.slide.active .pb1{background:var(--ok); animation:w11 1s ease-out .15s forwards}
+.slide.active .pb2{background:var(--sky); animation:w36 1.1s ease-out .15s forwards}
+.slide.active .pb3{background:var(--bad); animation:wfull2 1.3s ease-out .15s forwards}
+@keyframes w11{to{width:11%}} @keyframes w36{to{width:36%}} @keyframes wfull2{to{width:100%}}
+.moral{margin-top:20px; font-size:clamp(15px,1.8vw,19px)}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important; transition:none !important}
+  .slide .in,.slide.active .op,.slide.active .fnode,.slide.active .hbox,.slide.active .pr,
+  .slide.active .ldart,.bo1,.bo2{opacity:1 !important; transform:none}
+  .rr .rbar,.pd .pbar{width:40%}
+}
+
+/* presenter-paced builds: elements marked data-step appear one keypress at a time */
+.slide [data-step]:not(.on), .slide [data-step]:not(.on) *{animation:none !important}
+.slide [data-step]:not(.on){opacity:0 !important}
+.slide [data-step].on{animation-delay:0s !important}
+.folk{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; width:min(1240px,94vw)}
+.fk{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:22px 24px}
+.fk .h{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--blue); font-weight:600; margin-bottom:6px}
+.fk .folkline{font-size:clamp(15px,1.7vw,19px); font-style:italic; color:var(--dim); margin-bottom:8px}
+.fk .truth{font-size:clamp(13.5px,1.5vw,16px); line-height:1.55}
+.fk .n{font-family:"IBM Plex Mono",monospace; font-size:clamp(13px,1.5vw,16px); margin-top:9px; font-variant-numeric:tabular-nums}
+.moralstrip{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 24px;
+  font-family:"IBM Plex Mono",monospace; font-size:clamp(12.5px,1.4vw,15px); margin-top:16px}
+.moralstrip b{color:var(--blue)}
+@media (max-width:1000px){.folk{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- 1 -->
+<section class="slide active">
+  <div class="kicker">Improving Query Performance in MySQL 8 · Chapter 3</div>
+  <h1 class="in">Writing SQL the optimizer <span class="hl-u">loves</span></h1>
+  <p class="sub in" style="animation-delay:.15s">Same result, a tenth of the cost. Filters, joins, and subqueries
+  have <em>shapes</em> — and the optimizer handles some shapes far better than others.</p>
+  <div class="stage"><div style="display:flex; flex-direction:column; align-items:center">
+    <div class="folk">
+      <div class="fk" data-step="1"><div class="h">slide 3 · the OR trap</div>
+        <div class="folkline">"IN and OR are the same thing."</div>
+        <div class="truth">On one column, yes. Across two columns the OR poisons both indexes — rewritten as a UNION of seeks, it's fast again.</div>
+        <div class="n"><span class="hl-b">90 ms</span> vs <span class="hl-g">0.14 ms</span> — same rows</div></div>
+      <div class="fk" data-step="2"><div class="h">slide 4 · the NULL bomb</div>
+        <div class="folkline">"NOT IN (subquery) reads naturally."</div>
+        <div class="truth">One NULL in the subquery and it returns zero rows — no error, no warning. NOT EXISTS is immune by design.</div>
+        <div class="n"><span class="hl-b">0 rows, silently</span> vs <span class="hl-g">15 rows</span></div></div>
+      <div class="fk" data-step="3"><div class="h">slide 8 · fashion</div>
+        <div class="folkline">"Window functions are the modern way."</div>
+        <div class="truth">ROW_NUMBER() sorts and materializes all 1.2M rows; the unfashionable GROUP BY skip-scans the index.</div>
+        <div class="n"><span class="hl-b">901 ms</span> vs <span class="hl-g">97 ms</span></div></div>
+    </div>
+    <div class="moralstrip" data-step="4">shapes are fast or slow — <b>fashion isn't evidence; EXPLAIN ANALYZE is</b> · every claim above is measured live in this chapter</div>
+  </div></div>
+  <div class="foot">several measurements in this chapter contradict popular folklore. good.</div>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <div class="kicker">What SQL really sees</div>
+  <h2 class="in">The logical order of operations</h2>
+  <p class="sub in" style="animation-delay:.1s">You write SELECT first; the engine runs it sixth. Volume shrinks
+  top to bottom — help it shrink early.</p>
+  <div class="stage">
+    <div class="oop">
+      <div class="op" data-step="1"><span class="k">FROM / JOIN</span><span class="d">assemble the raw rows</span><span class="rows">3,000,000</span></div>
+      <div class="op" data-step="2"><span class="k hl-u">WHERE</span><span class="d">cheapest row = eliminated first (aliases don't exist yet!)</span><span class="rows">2,580,000</span></div>
+      <div class="op" data-step="3"><span class="k">GROUP BY</span><span class="d">bucket what survived</span><span class="rows">12</span></div>
+      <div class="op" data-step="4"><span class="k">HAVING</span><span class="d">WHERE, but it can see aggregates</span><span class="rows">12</span></div>
+      <div class="op" data-step="5"><span class="k">SELECT</span><span class="d">project late, project little — aliases born here</span><span class="rows">12</span></div>
+      <div class="op" data-step="6"><span class="k">DISTINCT</span><span class="d">deduplicate what survived — real work unless an index knows the answer</span><span class="rows">12</span></div>
+      <div class="op" data-step="7"><span class="k">ORDER BY</span><span class="d">can use aliases; free only if an index delivers the order</span><span class="rows">12</span></div>
+      <div class="op" data-step="8"><span class="k">LIMIT</span><span class="d">trims output, not work — unless order and access coincide</span><span class="rows">12</span></div>
+    </div>
+  </div>
+  <div class="foot">row counts: chapter 1's monster query · SELECT * measured: 69 ms vs 2.9 ms for the same rows — the columns you didn't need were the expensive ones</div>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <div class="kicker">Filter shapes</div>
+  <h2 class="in">IN seeks. Cross-column OR scans.</h2>
+  <p class="sub in" style="animation-delay:.1s">One B+tree descent cannot serve two different columns.</p>
+  <div class="stage">
+    <div class="race">
+      <div class="rr" data-step="1"><span class="lab">customer_id IN (137, 42007, 250999)<small>three range seeks on one column</small></span>
+        <div class="barwrap"><div class="rbar rb1"></div></div><span class="num hl-g">0.06 ms</span></div>
+      <div class="rr" data-step="2"><span class="lab">customer_id = 137 OR id = 500000<small>two columns → 1.2M-entry scan</small></span>
+        <div class="barwrap"><div class="rbar rb2"></div></div><span class="num hl-b">90 ms</span></div>
+      <div class="rr" data-step="3"><span class="lab">…rewritten as UNION of two seeks<small>same rows, both indexes used</small></span>
+        <div class="barwrap"><div class="rbar rb3"></div></div><span class="num hl-g">0.14 ms</span></div>
+      <div class="rr" data-step="4"><span class="lab">… OR coupon_code = 'SAVE7'<small>one unindexed arm poisons the whole OR</small></span>
+        <div class="barwrap"><div class="rbar rb4"></div></div><span class="num hl-b">81 ms</span></div>
+    </div>
+  </div>
+  <div class="foot">UNION, not UNION ALL — keep OR's dedup semantics · 650× for a copy-paste</div>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <div class="kicker">Negation's landmine</div>
+  <h2 class="in">The NOT IN null bomb</h2>
+  <p class="sub in" style="animation-delay:.1s">"Which coupon codes were never used on a cancelled order that day?" Right answer: 15.</p>
+  <div class="stage">
+    <div class="bomb">
+      <div class="panelbox" data-step="1">
+        <h3 class="dk-bad">NOT IN (subquery)</h3>
+        <div class="m">the subquery's list contains one NULL…</div>
+        <div class="chips poison">
+          <span class="chip">SAVE3</span><span class="chip">SAVE12</span><span class="chip null">NULL</span>
+          <span class="chip">SAVE7</span><span class="chip">SAVE18</span>
+        </div>
+        <div class="bombout bo1"><span class="dk-bad">→ 0 rows. No error. No warning.</span><br>
+        <span class="dk-dim">x &lt;&gt; NULL is unknown — one NULL poisons every row's predicate</span></div>
+      </div>
+      <div class="panelbox" data-step="2">
+        <h3 class="dk-ok">NOT EXISTS (correlated)</h3>
+        <div class="m">tests row existence — never compares to NULL</div>
+        <div class="chips">
+          <span class="chip">SAVE1</span><span class="chip">SAVE4</span><span class="chip">SAVE9</span>
+          <span class="chip">SAVE11</span><span class="chip">…</span>
+        </div>
+        <div class="bombout bo2"><span class="dk-ok">→ 15 rows. Immune by design.</span><br>
+        <span class="dk-dim">or: add IS NOT NULL inside the NOT IN subquery</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">grep your codebase for "NOT IN (SELECT" — this ships constantly · also: anti-join race in lab 3.7, where LEFT JOIN wins</div>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <div class="kicker">Joins under the hood</div>
+  <h2 class="in">Nested loop vs. hash join</h2>
+  <p class="sub in" style="animation-delay:.1s">3M order_items ⨝ 5k products — the optimizer nested-loops because an
+  index exists. Hash is 2.4× faster.</p>
+  <div class="stage">
+    <div class="joins">
+      <div class="panelbox" data-step="1">
+        <h3>Nested loop <span class="dk-dim">(optimizer's pick)</span></h3>
+        <div class="m">per item row: one descent into products' PK</div>
+        <div class="loopviz">
+          <div class="lrow" style="top:0">item #1</div>
+          <div class="lrow" style="top:30px">item #2</div>
+          <div class="lrow" style="top:60px">item #3</div>
+          <div class="lrow" style="top:90px">… ×3,000,000</div>
+          <div class="ldart" style="top:2px; animation-delay:.5s">→</div>
+          <div class="ldart" style="top:32px; animation-delay:.9s">→</div>
+          <div class="ldart" style="top:62px; animation-delay:1.3s">→</div>
+          <div class="ldart" style="top:92px; animation-delay:1.7s">→</div>
+          <div class="rtree">products PK<br>B+tree<br><br>3M descents</div>
+        </div>
+        <div class="jverdict dk-bad">1.74 s</div>
+      </div>
+      <div class="panelbox" data-step="2">
+        <h3>Hash join <span class="dk-dim">(IGNORE INDEX)</span></h3>
+        <div class="m">build once on 5k products, then stream 3M rows past it</div>
+        <div class="hashviz">
+          <div class="hbox">hash&nbsp;table: 5,000 products (built once)</div>
+          <div class="probe" id="probe"></div>
+        </div>
+        <div class="jverdict dk-ok">0.74 s — read each side exactly once</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">MySQL 8 only reaches for hash when no index is usable · thin filtered slice + indexed key → nested loop still unbeatable (541 ms → 25 ms)</div>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <div class="kicker">A semantics trap dressed as a tuning choice</div>
+  <h2 class="in">LEFT JOIN: ON filters, WHERE deletes</h2>
+  <p class="sub in" style="animation-delay:.1s">One week of orders, with their Klarna payment if any. Green = has a Klarna payment.</p>
+  <div class="stage">
+    <div class="onwhere">
+      <div class="panelbox" data-step="1">
+        <h3>filter in <span class="dk-sky">ON</span></h3>
+        <div class="m">LEFT JOIN payments p ON … AND p.method='klarna'</div>
+        <div class="rowsviz" id="keeprows"></div>
+        <div class="ow-count dk-ok">8,550 rows — every order kept, payment columns NULL unless Klarna</div>
+      </div>
+      <div class="panelbox" data-step="2">
+        <h3>filter in <span class="dk-bad">WHERE</span></h3>
+        <div class="m">…WHERE p.method='klarna' — NULL rows fail the test</div>
+        <div class="rowsviz vanish" id="loserows"></div>
+        <div class="ow-count dk-bad">1,553 rows — your LEFT JOIN silently became INNER</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">on INNER joins, ON vs WHERE is identical — same plan · on OUTER joins it's a different query</div>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <div class="kicker">The monster falls</div>
+  <h2 class="in">Aggregate at the right grain</h2>
+  <p class="sub in" style="animation-delay:.1s">The answer lives at <em>order</em> grain — and orders already carries
+  <span class="mono">total_cents</span>. The 3M-row join was never needed.</p>
+  <div class="stage">
+    <div class="grain">
+      <div class="panelbox" data-step="1">
+        <h3 class="dk-bad">item grain (as written)</h3>
+        <div class="flow">
+          <div class="fnode wide">order_items scan <small>— 3,000,000 rows</small></div>
+          <div class="fnode wide">join up to orders, customers, countries <small>— 2.58M carried</small></div>
+          <div class="fnode wide">COUNT(DISTINCT o.id) <small>— undoing the fan-out you created</small></div>
+          <div class="fnode">GROUP BY region → 12 rows</div>
+        </div>
+        <div class="gverdict dk-bad">4.0 s &nbsp;·&nbsp; pre-aggregating items first? 4.14 s — worse</div>
+      </div>
+      <div class="panelbox" data-step="2">
+        <h3 class="dk-ok">order grain (rewritten)</h3>
+        <div class="flow">
+          <div class="fnode">orders WHERE completed <small>— 1.03M rows, total_cents already there</small></div>
+          <div class="fnode">join customers, countries <small>— PK lookups</small></div>
+          <div class="fnode">plain COUNT(*) <small>— nothing fans out</small></div>
+          <div class="fnode">GROUP BY region → 12 rows <small>— byte-identical output</small></div>
+        </div>
+        <div class="gverdict dk-ok">1.75 s &nbsp;·&nbsp; + IGNORE INDEX (status): 1.47 s</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">the fastest work is work you don't do — verify identity before celebrating (we diffed: equal)</div>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <div class="kicker">Measure, don't moralize</div>
+  <h2 class="in">Latest order per customer — three shapes race</h2>
+  <div class="stage">
+    <div class="podium">
+      <div class="pd" data-step="1"><span class="lab">GROUP BY customer_id<small>loose index "skip scan for grouping"</small></span>
+        <div class="barwrap"><div class="pbar pb1"></div></div><span class="num hl-g">97 ms</span></div>
+      <div class="pd" data-step="2"><span class="lab">correlated MAX subquery<small>300k probes × 1 µs — fine because of the index</small></span>
+        <div class="barwrap"><div class="pbar pb2"></div></div><span class="num hl-s">320 ms</span></div>
+      <div class="pd" data-step="3"><span class="lab">ROW_NUMBER() OVER (…)<small>sorts + materializes all 1.2M rows</small></span>
+        <div class="barwrap"><div class="pbar pb3"></div></div><span class="num hl-b">901 ms</span></div>
+      <div class="moral in" data-step="4">The fashionable shape lost. The "evil" one was fine. Shapes are fast or slow
+      <b>on your indexes, on your data</b>.</div>
+    </div>
+  </div>
+  <div class="foot">also measured: a CTE referenced twice materializes once — 0.51 s vs 0.96 s inline · plan literally prints "(never executed)"</div>
+</section>
+
+</div>
+<div class="hud"><span id="counter">1 / 8</span><div class="bar"><i id="prog"></i></div><span>→ build / next · ← undo / back</span></div>
+<script>
+const slides=[...document.querySelectorAll('.slide')];
+const counter=document.getElementById('counter'), prog=document.getElementById('prog');
+let i=0;
+// probe stream cells (slide 5)
+const probe=document.getElementById('probe');
+for(let k=0;k<14;k++){const c=document.createElement('div');c.className='pr';c.style.animationDelay=(0.2+k*0.12)+'s';probe.appendChild(c);}
+// ON vs WHERE rows (slide 6): 33 rows, every 6th "pay"
+const keep=document.getElementById('keeprows'), lose=document.getElementById('loserows');
+for(let k=0;k<33;k++){
+  const a=document.createElement('div');a.className='orow'+(k%6===0?' pay':'');keep.appendChild(a);
+  const b=document.createElement('div');b.className='orow'+(k%6===0?' pay':'');lose.appendChild(b);
+}
+const stepsOf=s=>[...new Set([...s.querySelectorAll('[data-step]')].map(e=>+e.dataset.step))].sort((a,b)=>a-b);
+const isOn=(s,n)=>{const e=s.querySelector('[data-step="'+n+'"]');return e&&e.classList.contains('on');};
+function paint(){
+  const s=slides[i], st=stepsOf(s);
+  const done=st.filter(n=>isOn(s,n)).length;
+  counter.textContent=(i+1)+' / '+slides.length+(st.length?(' · build '+done+'/'+st.length):'');
+  prog.style.width=((i+1)/slides.length*100)+'%';
+}
+function setSlide(n, revealAll){
+  i=Math.max(0,Math.min(slides.length-1,n));
+  slides.forEach((s,k)=>{
+    if(k===i && !s.classList.contains('active')){s.classList.remove('active'); void s.offsetWidth;}
+    s.classList.toggle('active',k===i);
+  });
+  slides[i].querySelectorAll('[data-step]').forEach(e=>e.classList.toggle('on', !!revealAll));
+  paint();
+}
+function next(){
+  const s=slides[i], st=stepsOf(s);
+  const pending=st.find(n=>!isOn(s,n));
+  if(pending!==undefined){
+    [...s.querySelectorAll('[data-step="'+pending+'"]')].forEach((e,k)=>setTimeout(()=>e.classList.add('on'),k*120));
+    setTimeout(paint,20);
+  } else if(i<slides.length-1) setSlide(i+1,false);
+}
+function prev(){
+  const s=slides[i];
+  const lastOn=stepsOf(s).reverse().find(n=>isOn(s,n));
+  if(lastOn!==undefined){s.querySelectorAll('[data-step="'+lastOn+'"]').forEach(e=>e.classList.remove('on'));paint();}
+  else if(i>0) setSlide(i-1,true);
+}
+addEventListener('keydown',e=>{
+  if(['ArrowRight',' ','PageDown','ArrowDown'].includes(e.key)){e.preventDefault();next();}
+  else if(['ArrowLeft','PageUp','ArrowUp'].includes(e.key)){e.preventDefault();prev();}
+  else if(e.key==='Home')setSlide(0,false); else if(e.key==='End')setSlide(slides.length-1,true);
+});
+addEventListener('click',e=>{ if(e.clientX>innerWidth/2)next(); else prev(); });
+setSlide(0,false);
+</script>
+</body>
+</html>

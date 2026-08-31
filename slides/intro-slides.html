@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Course Introduction · Improving Query Performance in MySQL 8 — Slides</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#f2f1ef; --ink:#212121; --dim:#6d6c68;
+  --card:#ffffff; --line:rgba(33,33,33,.14);
+  --dark:#212121; --dark-ink:#f2f1ef; --dark-dim:#9b9a96; --dark-line:rgba(242,241,239,.16);
+  --blue:#0000ee; --sky:#3f9de0; --ok:#1d8048; --bad:#c93b2b;
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0; background:var(--paper); color:var(--ink); overflow:hidden;
+  font-family:"IBM Plex Sans",system-ui,sans-serif}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.deck{height:100%; position:relative}
+.slide{position:absolute; inset:0; padding:6vh 7vw; display:none; flex-direction:column}
+.slide.active{display:flex}
+.kicker{font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--blue); font-weight:600; margin-bottom:14px}
+h1{font-weight:500; font-size:clamp(34px,5.2vw,64px); line-height:1.02; margin:0 0 12px;
+  letter-spacing:-.03em; text-wrap:balance}
+h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spacing:-.025em; text-wrap:balance}
+.sub{color:var(--dim); font-size:clamp(15px,1.6vw,19px); max-width:70ch; margin:0 0 3vh}
+.stage{flex:1; display:flex; align-items:center; justify-content:center; min-height:0; gap:3vw; flex-wrap:wrap}
+.foot{color:var(--dim); font-size:13px; font-family:"IBM Plex Mono",monospace; margin-top:2vh}
+.hl-u{color:var(--blue)} .hl-s{color:var(--sky)} .hl-g{color:var(--ok)} .hl-b{color:var(--bad)}
+.dk-dim{color:var(--dark-dim)} .dk-sky{color:var(--sky)}
+.slide .in{opacity:0; transform:translateY(10px)}
+.slide.active .in{animation:rise .5s ease-out forwards}
+@keyframes rise{to{opacity:1; transform:none}}
+.hud{position:fixed; left:0; right:0; bottom:0; display:flex; align-items:center; gap:14px;
+  padding:10px 18px; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim)}
+.hud .bar{flex:1; height:2px; background:var(--line)} .hud .bar i{display:block; height:2px; background:var(--blue); width:0; transition:width .25s}
+
+.arith{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 24px;
+  font-family:"IBM Plex Mono",monospace; font-size:clamp(13.5px,1.6vw,17px); line-height:2; font-variant-numeric:tabular-nums}
+.arith b{color:var(--blue)}
+.codebox{font-family:"IBM Plex Mono",monospace; font-size:clamp(13px,1.55vw,17px);
+  background:var(--dark); color:var(--dark-ink); border-radius:10px; padding:20px 26px; line-height:1.9}
+.codebox b{color:var(--sky); font-weight:600}
+
+/* fact chips (title slide) */
+.factrow{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; width:min(1200px,94vw)}
+.fact{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 22px; text-align:center}
+.fact .n{font-weight:500; font-size:clamp(24px,2.8vw,36px); letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.fact .l{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--dim); margin-top:4px}
+
+/* generic card grid */
+.cards{display:grid; gap:14px; width:min(1320px,94vw)}
+.c3{grid-template-columns:repeat(3,1fr)} .c5{grid-template-columns:repeat(5,1fr)}
+.jz{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 18px; display:flex; flex-direction:column; gap:8px}
+.jz .h{font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--blue); font-weight:600}
+.jz .t{font-weight:600; font-size:clamp(14.5px,1.6vw,18px); line-height:1.25}
+.jz .d{font-size:clamp(12.5px,1.4vw,14.5px); color:var(--dim); line-height:1.5}
+.jz .m{font-family:"IBM Plex Mono",monospace; font-size:clamp(12px,1.35vw,14px); margin-top:auto; font-variant-numeric:tabular-nums}
+@media (max-width:1100px){.c5{grid-template-columns:repeat(2,1fr)} .c3{grid-template-columns:1fr}}
+
+/* schema table */
+.mini{border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:8px;
+  overflow:hidden; font-size:clamp(13px,1.6vw,18px)}
+.mini caption{caption-side:top; text-align:left; font-family:"IBM Plex Mono",monospace;
+  font-size:12px; color:var(--blue); font-weight:600; padding:0 2px 6px}
+.mini th{font-family:"IBM Plex Mono",monospace; font-size:12px; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--dim); font-weight:500; text-align:left; padding:8px 16px; border-bottom:1px solid var(--line); background:var(--card)}
+.mini td{padding:9px 16px; border-top:1px solid var(--line); font-variant-numeric:tabular-nums}
+.mini td.mono{font-family:"IBM Plex Mono",monospace; font-size:.9em}
+.mini td.r{text-align:right}
+.slide.active .mini tbody tr{opacity:0; animation:rise .35s ease-out forwards}
+.slide.active .mini tbody tr:nth-child(1){animation-delay:.1s}
+.slide.active .mini tbody tr:nth-child(2){animation-delay:.22s}
+.slide.active .mini tbody tr:nth-child(3){animation-delay:.34s}
+.slide.active .mini tbody tr:nth-child(4){animation-delay:.46s}
+.slide.active .mini tbody tr:nth-child(5){animation-delay:.58s}
+.slide.active .mini tbody tr:nth-child(6){animation-delay:.7s}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important; transition:none !important}
+  .slide .in,.slide.active .mini tbody tr{opacity:1 !important; transform:none}
+}
+
+/* presenter-paced builds: elements marked data-step appear one keypress at a time */
+.slide [data-step]:not(.on), .slide [data-step]:not(.on) *{animation:none !important}
+.slide [data-step]:not(.on){opacity:0 !important}
+.slide [data-step].on{animation-delay:0s !important}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- 1 · title -->
+<section class="slide active">
+  <div class="kicker">a hands-on course · every number measured live</div>
+  <h1 class="in">Improving Query Performance in <span class="hl-u">MySQL 8</span></h1>
+  <p class="sub in" style="animation-delay:.15s">Real queries, from seconds to milliseconds — on a realistic
+  e-commerce database you'll run in Docker. You read what MySQL actually does, fix it, and prove the fix.</p>
+  <div class="stage"><div style="display:flex; flex-direction:column; gap:20px; align-items:center">
+    <div class="factrow">
+      <div class="fact" data-step="1"><div class="n">4 + 1</div><div class="l">chapters (+ optional refresher)</div></div>
+      <div class="fact" data-step="1"><div class="n">18</div><div class="l">lessons</div></div>
+      <div class="fact" data-step="1"><div class="n">54</div><div class="l">exercises &amp; deep dives</div></div>
+      <div class="fact" data-step="1"><div class="n">1</div><div class="l">capstone rescue</div></div>
+      <div class="fact" data-step="1"><div class="n">5</div><div class="l">production scenarios</div></div>
+      <div class="fact" data-step="1"><div class="n">≈ 4–5 h</div><div class="l">total</div></div>
+    </div>
+    <div class="arith" data-step="2">the deal: <b>you will never be shown a number that wasn't measured</b> —
+    and by the end, you won't accept one either</div>
+  </div></div>
+  <div class="foot">→ / space: next build, then next slide · ← undoes a build</div>
+</section>
+
+<!-- 2 · the situation -->
+<section class="slide">
+  <div class="kicker">your new job</div>
+  <h2 class="in">Welcome to UrbanCart</h2>
+  <p class="sub in" style="animation-delay:.1s">An online retailer whose database was built in a hurry —
+  and has been slowing down ever since. You just inherited it.</p>
+  <div class="stage"><div style="display:flex; flex-direction:column; gap:18px; align-items:center">
+    <div class="cards c3">
+      <div class="jz" data-step="1"><div class="h">the size</div>
+        <div class="t">5.5M rows · ~350 MB</div>
+        <div class="d">Not big data — and that's the point. If queries are slow at this size, hardware won't save you at ten times it.</div>
+        <div class="m">6 tables · fits in the buffer pool</div></div>
+      <div class="jz" data-step="2"><div class="h">the schema crime</div>
+        <div class="t">Zero secondary indexes</div>
+        <div class="d">Only primary keys exist. Every lookup that isn't by id reads the entire table, every time, for every user.</div>
+        <div class="m hl-b">every email login: full scan</div></div>
+      <div class="jz" data-step="3"><div class="h">the symptoms</div>
+        <div class="t">45 ms lookups · 4 s reports</div>
+        <div class="d">A single customer lookup burns 45 ms of CPU; the morning revenue report takes four seconds and gets refreshed all day.</div>
+        <div class="m">an index does the lookup in <span class="hl-g">9 µs</span></div></div>
+    </div>
+    <div class="arith" data-step="4">your job over the next four hours: fix it — <b>measuring every step</b>,
+    so you always know whether you actually made things better</div>
+  </div></div>
+  <div class="foot">the 45 ms → 9 µs lookup is exercise 2.2 · the 4 s report is the chapter-1 baseline you'll rescue in the capstone</div>
+</section>
+
+<!-- 3 · the dataset -->
+<section class="slide">
+  <div class="kicker">the dataset</div>
+  <h2 class="in">Six tables, deterministically seeded</h2>
+  <p class="sub in" style="animation-delay:.1s">One Docker command builds it. The seed is deterministic —
+  every learner gets byte-identical data, so your numbers land next to the printed ones.</p>
+  <div class="stage"><div style="display:flex; flex-direction:column; gap:18px; align-items:center">
+    <table class="mini" data-step="1"><caption>urbancart</caption>
+      <thead><tr><th>table</th><th style="text-align:right">rows</th><th>what it holds</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">countries</td><td class="r">32</td><td>code → name, region, continent</td></tr>
+        <tr><td class="mono">customers</td><td class="r">300,000</td><td>email · name · country_code · city · created_at</td></tr>
+        <tr><td class="mono">products</td><td class="r">5,000</td><td>sku · category · price_cents · active</td></tr>
+        <tr><td class="mono">orders</td><td class="r">1,200,000</td><td>customer_id · status · order_date · total_cents · ship_country · coupon_code</td></tr>
+        <tr><td class="mono">order_items</td><td class="r">~3,000,000</td><td>order_id · product_id · quantity · unit_price_cents</td></tr>
+        <tr><td class="mono">payments</td><td class="r">~1,070,000</td><td>order_id · method · status · amount_cents · provider_ref · paid_at</td></tr>
+      </tbody></table>
+    <div class="arith" data-step="2">traps planted from real production schemas: a <b>numeric-looking VARCHAR</b> ·
+    heavy <b>status skew</b> (86% 'completed') · DATETIME columns begging for <b>DATE()</b> mistakes — you'll meet them all</div>
+  </div></div>
+  <div class="foot">advanced/ adds two more tables later: activity 1.5M (typed pointers) · outbox 1.7M (poller patterns) — +3.2M rows</div>
+</section>
+
+<!-- 4 · the journey -->
+<section class="slide">
+  <div class="kicker">the journey</div>
+  <h2 class="in">Five chapters, one arc</h2>
+  <p class="sub in" style="animation-delay:.1s">See what MySQL does → give it the right indexes → write SQL it
+  can use → run the whole thing as a repeatable workflow.</p>
+  <div class="stage"><div style="display:flex; flex-direction:column; gap:16px; align-items:center">
+    <div class="cards c5">
+      <div class="jz" data-step="1"><div class="h">ch 0 · optional</div>
+        <div class="t">Foundations</div>
+        <div class="d">Joins, subqueries, CTEs, temp tables — MySQL-style, including what MySQL lacks.</div>
+        <div class="m">skip if fluent</div></div>
+      <div class="jz" data-step="2"><div class="h">ch 1 · see</div>
+        <div class="t">How MySQL runs your query</div>
+        <div class="d">The lifecycle, EXPLAIN ANALYZE, slow log, sys schema — and a measured baseline of the pain.</div>
+        <div class="m">baseline scorecard</div></div>
+      <div class="jz" data-step="3"><div class="h">ch 2 · index</div>
+        <div class="t">Indexes that get used</div>
+        <div class="d">B+trees, selectivity, composite &amp; covering — and the five ways production code throws indexes away.</div>
+        <div class="m">45 ms → 9 µs</div></div>
+      <div class="jz" data-step="4"><div class="h">ch 3 · shape</div>
+        <div class="t">SQL the optimizer loves</div>
+        <div class="d">Filter shapes, join algorithms, the NULL bomb, grain — same result, a tenth of the cost.</div>
+        <div class="m">90 ms → 0.14 ms</div></div>
+      <div class="jz" data-step="5"><div class="h">ch 4 · workflow</div>
+        <div class="t">From ticket to fix</div>
+        <div class="d">One repeatable loop, run on a dashboard query that couldn't even be measured.</div>
+        <div class="m hl-g">killed at 21 min → 1.14 s</div></div>
+    </div>
+    <div class="arith" data-step="6">then, if you want more: <b>5 production-shaped scenarios</b> — ORM OR-chains ·
+    polymorphic typed pointers · outbox pollers · retention purges · measured Big-O for SQL</div>
+  </div></div>
+  <div class="foot">full lesson-by-lesson syllabus: OUTLINE.md</div>
+</section>
+
+<!-- 5 · the method -->
+<section class="slide">
+  <div class="kicker">how this course works</div>
+  <h2 class="in">Teach a section, then do it</h2>
+  <p class="sub in" style="animation-delay:.1s">Concepts stick when the practical follows within minutes —
+  every lesson hands you straight to its lab.</p>
+  <div class="stage"><div style="display:flex; flex-direction:column; gap:18px; align-items:center">
+    <div class="cards c3">
+      <div class="jz" data-step="1"><div class="h">the rhythm</div>
+        <div class="t">lesson → its exercises → next lesson</div>
+        <div class="d">Each chapter: transcript ("the video") + this deck's sibling + lab.md with starter SQL and hints + solutions.sql with measured timings.</div>
+        <div class="m">▶ lesson · ⌨ hands-on · ❓ concept check · ⚙ deep dive</div></div>
+      <div class="jz" data-step="2"><div class="h">the discipline</div>
+        <div class="t">Measure honestly</div>
+        <div class="d">Warm cache, run twice, write it down, save the result set. EXPLAIN ANALYZE is the referee — never vibes, never "it feels faster".</div>
+        <div class="m">identical results, proven with diff</div></div>
+      <div class="jz" data-step="3"><div class="h">the safety net</div>
+        <div class="t">You can't break it</div>
+        <div class="d">Made a mess of indexes? One script returns the database to its chapter-1 state. The seed is deterministic — rebuild from scratch anytime.</div>
+        <div class="m">setup/reset_lab_indexes.sql</div></div>
+    </div>
+    <div class="arith" data-step="4">do the chapters <b>in order</b> — later ones assume the indexes and habits built in earlier ones</div>
+  </div></div>
+  <div class="foot">each transcript opens with its own teach-then-do map</div>
+</section>
+
+<!-- 6 · setup -->
+<section class="slide">
+  <div class="kicker">before lesson one</div>
+  <h2 class="in">Setup: one command</h2>
+  <p class="sub in" style="animation-delay:.1s">Requirement: Docker. The container runs MySQL 8 on port 3307,
+  so it won't collide with anything you already have.</p>
+  <div class="stage"><div style="display:flex; flex-direction:column; gap:18px; align-items:center">
+    <div class="codebox" data-step="1"><span class="dk-dim"># build and seed (a few minutes, one-time)</span><br>
+cd setup<br>
+./setup.sh<br><br>
+<span class="dk-dim"># connect</span><br>
+docker exec -it mysql-tuning-course mysql -uroot -pcourse urbancart</div>
+    <div class="arith" data-step="2">sanity check: <b>SELECT COUNT(*) FROM orders;</b> → 1,200,000 · you're ready<br>
+    hardware varies, so your absolute times will differ from the printed ones — <b>the ratios and the plans will not</b></div>
+  </div></div>
+  <div class="foot">everything in this course runs inside this one container — nothing else to install</div>
+</section>
+
+<!-- 7 · outcomes -->
+<section class="slide">
+  <div class="kicker">where you land</div>
+  <h2 class="in">What you'll walk out with</h2>
+  <div class="stage"><div style="display:flex; flex-direction:column; gap:18px; align-items:center">
+    <div class="cards c3">
+      <div class="jz" data-step="1"><div class="h">read</div>
+        <div class="t">Plans, honestly</div>
+        <div class="d">EXPLAIN ANALYZE fluency: time × loops, estimates vs reality, and which node is actually the bill.</div></div>
+      <div class="jz" data-step="2"><div class="h">design</div>
+        <div class="t">Indexes that get used</div>
+        <div class="d">Composite order, covering, selectivity — and the discipline to retire indexes invisible-first.</div></div>
+      <div class="jz" data-step="3"><div class="h">write</div>
+        <div class="t">Shapes that fly</div>
+        <div class="d">Recognize the OR trap, the NULL bomb, the wrong grain — and rewrite without changing results.</div></div>
+      <div class="jz" data-step="4"><div class="h">work</div>
+        <div class="t">The loop</div>
+        <div class="d">Reproduce → measure → read the plan → change ONE thing → verify identity → stop on purpose.</div></div>
+      <div class="jz" data-step="5"><div class="h">judge</div>
+        <div class="t">When to stop</div>
+        <div class="d">Requirement met beats theoretically optimal — every further change adds write cost and fragility.</div></div>
+      <div class="jz" data-step="6"><div class="h">scale</div>
+        <div class="t">Production instincts</div>
+        <div class="d">The five advanced scenarios turn incidents you'll actually meet into shapes you'll recognize on sight.</div></div>
+    </div>
+    <div class="arith" data-step="7">need the constructs first? start at <b>chapter 0</b> · already fluent? <b>chapter 1</b> — see you at UrbanCart</div>
+  </div></div>
+  <div class="foot">next deck: chapter0-slides.html (refresher) or chapter1-slides.html (the journey of a query)</div>
+</section>
+
+</div>
+
+<div class="hud">
+  <span id="counter">1 / 7</span>
+  <div class="bar"><i id="prog"></i></div>
+  <span>→ build / next · ← undo / back</span>
+</div>
+
+<script>
+const slides=[...document.querySelectorAll('.slide')];
+const counter=document.getElementById('counter'), prog=document.getElementById('prog');
+let i=0;
+const stepsOf=s=>[...new Set([...s.querySelectorAll('[data-step]')].map(e=>+e.dataset.step))].sort((a,b)=>a-b);
+const isOn=(s,n)=>{const e=s.querySelector('[data-step="'+n+'"]');return e&&e.classList.contains('on');};
+function paint(){
+  const s=slides[i], st=stepsOf(s);
+  const done=st.filter(n=>isOn(s,n)).length;
+  counter.textContent=(i+1)+' / '+slides.length+(st.length?(' · build '+done+'/'+st.length):'');
+  prog.style.width=((i+1)/slides.length*100)+'%';
+}
+function setSlide(n, revealAll){
+  i=Math.max(0,Math.min(slides.length-1,n));
+  slides.forEach((s,k)=>{
+    if(k===i && !s.classList.contains('active')){s.classList.remove('active'); void s.offsetWidth;}
+    s.classList.toggle('active',k===i);
+  });
+  slides[i].querySelectorAll('[data-step]').forEach(e=>e.classList.toggle('on', !!revealAll));
+  paint();
+}
+function next(){
+  const s=slides[i], st=stepsOf(s);
+  const pending=st.find(n=>!isOn(s,n));
+  if(pending!==undefined){
+    [...s.querySelectorAll('[data-step="'+pending+'"]')].forEach((e,k)=>setTimeout(()=>e.classList.add('on'),k*120));
+    setTimeout(paint,20);
+  } else if(i<slides.length-1) setSlide(i+1,false);
+}
+function prev(){
+  const s=slides[i];
+  const lastOn=stepsOf(s).reverse().find(n=>isOn(s,n));
+  if(lastOn!==undefined){s.querySelectorAll('[data-step="'+lastOn+'"]').forEach(e=>e.classList.remove('on'));paint();}
+  else if(i>0) setSlide(i-1,true);
+}
+addEventListener('keydown',e=>{
+  if(['ArrowRight',' ','PageDown','ArrowDown'].includes(e.key)){e.preventDefault();next();}
+  else if(['ArrowLeft','PageUp','ArrowUp'].includes(e.key)){e.preventDefault();prev();}
+  else if(e.key==='Home')setSlide(0,false); else if(e.key==='End')setSlide(slides.length-1,true);
+});
+addEventListener('click',e=>{ if(e.clientX>innerWidth/2)next(); else prev(); });
+setSlide(0,false);
+</script>
+</body>
+</html>
