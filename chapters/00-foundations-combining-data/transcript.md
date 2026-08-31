@@ -36,7 +36,10 @@ One more foundation before joins — the one most developers and quite a few
 DBAs never learned: **a SELECT is not executed in the order you write it.**
 You write SELECT first; MySQL runs it fifth. The real order is FROM →
 WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT, and the
-slide walks a real query through every stage with measured survivor counts
+slide walks a real query through every stage with measured survivor counts.
+One stage matters especially for this chapter: **joins resolve inside FROM**
+— every JOIN … ON runs first, before WHERE ever sees a row, and LIMIT (with
+OFFSET, if present) runs dead last. The slide walks the stages
 — measured on our data, not derivable from the query text: 1.2 million
 rows into FROM, 1,032,479 past WHERE, 17 groups out of GROUP BY, 7 past
 HAVING, 3 after LIMIT. (And note the greyed DISTINCT stage: writing

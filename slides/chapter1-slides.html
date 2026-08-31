@@ -265,23 +265,33 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
 <!-- 2 -->
 <section class="slide">
   <div class="kicker">The journey of a query</div>
-  <h2 class="in">Four stops between Enter and rows</h2>
+  <h2 class="in">From Enter to rows: the full round trip</h2>
   <p class="sub in" style="animation-delay:.1s">Every tuning decision you'll ever make is a prediction about this machinery.</p>
-  <div class="stage">
+  <div class="stage"><div style="display:flex; flex-direction:column; gap:6px; align-items:center; width:100%">
     <div class="pipewrap">
-      <span class="token mono" data-step="5">SELECT … WHERE email = ?</span>
+      <span class="token mono" data-step="9">SELECT … WHERE email = ?</span>
       <div class="pipe">
-        <div class="stagebox" data-step="1"><div class="t">Parser</div><div class="d">syntax → tree.<br>Nothing to tune.</div></div>
+        <div class="stagebox" data-step="1"><div class="t">Client → connection</div><div class="d">TCP + auth, a thread<br>picks you up. Pooled,<br>cheap — not our story.</div></div>
         <div class="arrow" data-step="2">→</div>
-        <div class="stagebox" data-step="2"><div class="t hl-u">Optimizer</div><div class="d">weighs plans using<br><b>estimates</b>, picks cheapest.<br>The brain — and the gambler.</div></div>
+        <div class="stagebox" data-step="2"><div class="t">Parser</div><div class="d">syntax → tree.<br>Nothing to tune.</div></div>
         <div class="arrow" data-step="3">→</div>
-        <div class="stagebox" data-step="3"><div class="t">Executor</div><div class="d">walks the chosen plan,<br>pulls rows.</div></div>
+        <div class="stagebox" data-step="3"><div class="t">Preprocessor</div><div class="d">do these tables and<br>columns exist? privileges?<br>Validates the tree.</div></div>
         <div class="arrow" data-step="4">→</div>
-        <div class="stagebox" data-step="4"><div class="t hl-s">InnoDB</div><div class="d">storage engine.<br>B+trees + buffer pool.<br>The table <b>is</b> an index.</div></div>
+        <div class="stagebox" data-step="4"><div class="t hl-u">Optimizer</div><div class="d">weighs plans on <b>estimates</b>:<br>index seek or full scan (slide 3)?<br>The brain — and the gambler.</div></div>
       </div>
     </div>
-  </div>
-  <div class="foot">the optimizer never runs your query to decide — it guesses from statistics</div>
+    <div class="arrow" data-step="5" style="width:min(1180px,94vw); text-align:right; padding-right:60px">↓</div>
+    <div class="pipe" style="width:min(1180px,94vw)">
+      <div class="stagebox" data-step="5"><div class="t">Executor</div><div class="d">walks the chosen plan,<br>asks the engine for rows.</div></div>
+      <div class="arrow" data-step="6">→</div>
+      <div class="stagebox" data-step="6"><div class="t hl-s">InnoDB · buffer pool</div><div class="d">every page request<br>checks RAM first<br>(ours: 1 GB — all of it fits).</div></div>
+      <div class="arrow" data-step="7">→</div>
+      <div class="stagebox" data-step="7"><div class="t"><span class="hl-g">hit</span> · <span class="hl-b">miss</span></div><div class="d"><span class="hl-g">hit</span>: serve from memory<br><span class="hl-b">miss</span>: read the page from the<br>data file (.ibd), cache, serve</div></div>
+      <div class="arrow" data-step="8">→</div>
+      <div class="stagebox" data-step="8"><div class="t">Result → client</div><div class="d">matching rows stream<br>back over the same<br>connection.</div></div>
+    </div>
+  </div></div>
+  <div class="foot">the optimizer never runs your query to decide — it guesses from statistics · a "warm cache" = the hit path, which is why we time second runs</div>
 </section>
 
 <!-- 3 -->

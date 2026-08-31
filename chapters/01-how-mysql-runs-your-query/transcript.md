@@ -37,12 +37,16 @@ to add. But first, you need to understand what MySQL does with a query at
 all — because every tuning decision you'll ever make is really a prediction
 about this machinery.
 
-[SLIDE 2: query lifecycle — client → parser → optimizer → executor → InnoDB]
+[SLIDE 2: query lifecycle — the full round trip, client to client]
 
-When you press Enter, four things happen.
+When you press Enter, your statement makes a round trip. First the plumbing:
+the connection — TCP, authentication, a thread that picks your session up.
+Pooled and cheap; it's not our story. Then four things happen.
 
-**One: parsing.** MySQL checks your syntax and turns the text into a tree.
-Cheap, uninteresting, nothing to tune.
+**One: parsing and validation.** The parser checks your syntax and turns the
+text into a tree; the preprocessor then validates it — do these tables and
+columns actually exist, are you allowed to read them? Cheap, uninteresting,
+nothing to tune.
 
 **Two: optimization.** This is the brain. The optimizer looks at your tree
 and asks: what are my options? Which table should I read first? For each
@@ -68,9 +72,14 @@ tree to descend. It must read *every one of the 1.2 million rows* and check
 each. That's a **full table scan**, and it's the villain of chapter 1.
 
 One more piece: InnoDB caches data pages in memory, in the **buffer pool**.
-Our container gives it 1 GB, so after a warm-up the entire dataset lives in
-RAM. Keep that in mind: every slow query you'll see in this course is slow
-*with all data already in memory*. Real production adds disk reads on top.
+Every page request checks RAM first — a **hit** is served from memory; a
+**miss** reads the page from the data file on disk (the `.ibd` file), caches
+it, and serves it. Then the matching rows stream back to the client over the
+same connection, and the round trip is complete. Our container gives the
+pool 1 GB, so after a warm-up the entire dataset lives in RAM — a warm cache
+just means "the hit path", which is exactly why we time second runs. Keep
+that in mind: every slow query you'll see in this course is slow *with all
+data already in memory*. Real production adds disk-read misses on top.
 
 [TERMINAL]
 
