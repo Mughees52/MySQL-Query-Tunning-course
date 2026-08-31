@@ -96,9 +96,9 @@ production incidents — the ORM that writes ten-thousand-arm WHERE clauses,
 polymorphic typed pointers, the outbox poller, the retention purge that
 locks 1.7 million rows, and measured Big-O growth curves for SQL.
 
-[SLIDE 5: the method — teach then do, measure honestly, safety net]
+[SLIDE 5: the method — learn a section then do it, measure honestly, safety net]
 
-How to work through it: **teach, then do.** Every lesson is followed
+How to work through it: **learn a section, then do it.** Every lesson is followed
 immediately by its exercises — read one lesson, do its lab, then move on.
 Concepts stick when the practical follows within minutes, not at the end of
 the chapter. Each chapter gives you a transcript (what you're reading now),
