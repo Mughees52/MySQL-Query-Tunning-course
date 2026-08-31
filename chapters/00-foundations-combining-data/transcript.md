@@ -36,13 +36,16 @@ One more foundation before joins — the one most developers and quite a few
 DBAs never learned: **a SELECT is not executed in the order you write it.**
 You write SELECT first; MySQL runs it fifth. The real order is FROM →
 WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT, and the
-slide walks a real query through every stage with measured survivor counts.
-One stage matters especially for this chapter: **joins resolve inside FROM**
-— every JOIN … ON runs first, before WHERE ever sees a row, and LIMIT (with
-OFFSET, if present) runs dead last. The slide walks the stages
-— measured on our data, not derivable from the query text: 1.2 million
-rows into FROM, 1,032,479 past WHERE, 17 groups out of GROUP BY, 7 past
-HAVING, 3 after LIMIT. (And note the greyed DISTINCT stage: writing
+slide walks a real query — one with a join in it — through every stage
+with measured survivor counts. One stage matters especially for this
+chapter: **joins resolve inside FROM** — the JOIN … ON to countries runs
+first, before WHERE ever sees a row. Watch the counts, measured on our
+data and not derivable from the query text: 1.2 million rows into FROM;
+the join matches each order to exactly one country, so still 1,200,000
+after JOIN — but hold that thought, because 1:N joins *multiply* rows and
+missing matches *drop* them, which is this chapter's arithmetic; then
+1,032,479 past WHERE, 17 groups out of GROUP BY, 7 past HAVING, 3 after
+LIMIT — and LIMIT (with OFFSET, if present) runs dead last. (And note the greyed DISTINCT stage: writing
 `SELECT DISTINCT` on this query would be a no-op — GROUP BY already left
 one row per country. `DISTINCT` stacked on `GROUP BY` is a common code
 smell; if you group, the groups are already unique.) Two things to internalize. First,

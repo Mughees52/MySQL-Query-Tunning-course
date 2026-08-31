@@ -8,11 +8,13 @@
 -- ============================================================================
 
 -- STEP 1 · [SLIDE 2] how MySQL reads a SELECT — run the pipeline query
--- expect: 3 rows — US 309,882 · GB 154,855 · DE 102,838
-SELECT ship_country, COUNT(*) AS orders
-FROM orders
-WHERE status = 'completed'
-GROUP BY ship_country
+-- (note the JOIN: it resolves inside FROM, before WHERE — 1:1 here, 1,200,000 rows)
+-- expect: 3 rows — United States 309,882 · United Kingdom 154,855 · Germany 102,838
+SELECT co.country_name, COUNT(*) AS orders
+FROM orders o
+JOIN countries co ON co.country_code = o.ship_country
+WHERE o.status = 'completed'
+GROUP BY co.country_name
 HAVING COUNT(*) > 50000
 ORDER BY orders DESC
 LIMIT 3;

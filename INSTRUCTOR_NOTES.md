@@ -94,7 +94,8 @@ orders on 2025-06-15, 4,845 SG orders) are stable.
 ## Chapter 0 (foundations)
 
 Optional refresher: joins / subqueries+CTEs / temp tables, MySQL-native.
-Measured anchors: SELECT pipeline (slide 2) 1,200,000 → 1,032,479 completed
+Measured anchors: SELECT pipeline (slide 2, query joins countries 1:1)
+1,200,000 → 1,200,000 joined → 1,032,479 completed
 → 17 ship countries → 7 past HAVING(>50k) → top-3 US 309,882 / GB 154,855 /
 DE 102,838; subquery slide (slide 3) avg order value 743.82, 543,009
 above mean, plan text "subquery in condition; run only once";
