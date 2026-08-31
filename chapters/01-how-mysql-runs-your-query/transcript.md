@@ -125,6 +125,10 @@ Five columns tell you almost everything:
 - **possible_keys / key** — which indexes *could* serve this query, and which
   one the optimizer picked. `NULL` and `NULL`: there's nothing to pick. The
   only index on `customers` is the primary key, and we're not filtering by id.
+- **key_len** — how many *bytes* of the chosen index are actually used.
+  Useless today (NULL), priceless in chapter 2: on a composite index it's
+  the lie detector that tells you how many of its columns your query really
+  engaged. Bookmark it.
 - **rows** — the optimizer's *estimate* of rows it must examine: ~298
   thousand. To return one.
 - **filtered** — what percentage of examined rows it *guesses* will survive
@@ -135,6 +139,13 @@ Five columns tell you almost everything:
 - **Extra** — plan annotations. `Using where` just means rows get filtered
   after being read. Later you'll hunt scarier residents of this column:
   `Using temporary` and `Using filesort`.
+
+Two habits to attach to every EXPLAIN. Run `SHOW WARNINGS` right after it —
+MySQL leaves a Note containing the query *as the optimizer rewrote it*
+(expanded columns, merged subqueries; you'll watch a derived table vanish
+into the outer query in deep-dive 3.16). And know EXPLAIN's blind spots:
+it says nothing about triggers, stored functions, or UDFs your statement
+may fire — a clean plan is not a promise about *their* cost.
 
 [SLIDE 5: the access-type ladder]
 
@@ -162,7 +173,11 @@ In the exercises: EXPLAIN the lookup yourself and climb the ladder.
 
 `EXPLAIN` shows the *plan* — the forecast. `EXPLAIN ANALYZE`, available since
 MySQL 8.0.18, actually **runs the query** and annotates the plan with what
-really happened:
+really happened. Let that sink in before you ever point it at production:
+ANALYZE *executes* the statement — a 20-minute query takes 20 minutes to
+ANALYZE. When in doubt, cap it (`/*+ MAX_EXECUTION_TIME(…) */` — the
+capstone makes this a habit) or ANALYZE on a replica. Here, on our
+container, fire away:
 
 ```sql
 EXPLAIN ANALYZE

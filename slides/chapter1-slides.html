@@ -325,15 +325,16 @@ h2{font-weight:500; font-size:clamp(26px,3.6vw,44px); margin:0 0 6px; letter-spa
 <!-- 4 -->
 <section class="slide">
   <div class="kicker">Your first EXPLAIN</div>
-  <h2 class="in">Five columns tell you almost everything</h2>
+  <h2 class="in">Six columns tell you almost everything</h2>
   <div class="stage">
     <div class="explain" data-step="1">
       <span class="dk-sky">EXPLAIN</span> SELECT id, full_name, city FROM customers WHERE email = '…';<br><br>
       <span class="callout c1"><span class="tip">access method — ALL = full scan</span>type: <b class="dk-bad">ALL</b></span> &nbsp;·&nbsp;
       <span class="callout c2"><span class="tip">chosen index — nothing to choose</span>key: <b>NULL</b></span> &nbsp;·&nbsp;
+      <span class="callout c2"><span class="tip">BYTES of the index used — the composite-index lie detector (ch 2)</span>key_len: <b>NULL</b></span> &nbsp;·&nbsp;
       <span class="callout c3"><span class="tip">rows it expects to examine</span>rows: <b class="dk-sky">298,422</b></span> &nbsp;·&nbsp;
       <span class="callout c4"><span class="tip">its guess: 10% survive. Truth: 1 row.</span>filtered: <b>10.00</b></span><br>
-      <span class="dk-dim">Extra: Using where</span>
+      <span class="dk-dim">Extra: Using where &nbsp;·&nbsp; then: SHOW WARNINGS → the query as the optimizer rewrote it</span>
     </div>
   </div>
   <div class="foot">estimates lie — remember `filtered` when we meet histograms in chapter 2</div>

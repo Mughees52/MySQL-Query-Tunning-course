@@ -24,6 +24,11 @@ EXPLAIN ANALYZE
 SELECT id, order_date, total_cents FROM orders
 WHERE customer_id = 137 ORDER BY order_date DESC LIMIT 5;
 
--- STEP 5 · [SLIDE 4, continued] the leftmost-prefix rule, violated live
+-- STEP 5 · key_len, the composite lie detector — 8 bytes vs 13
+-- expect: key_len=8 (customer_id only), then key_len=13 (both columns engaged)
+EXPLAIN SELECT id FROM orders WHERE customer_id = 137;
+EXPLAIN SELECT id FROM orders WHERE customer_id = 137 AND order_date >= '2025-06-01';
+
+-- STEP 6 · [SLIDE 4, continued] the leftmost-prefix rule, violated live
 -- expect: type=index — a full 1.2M-entry scan, no seek (date alone has no prefix)
 EXPLAIN SELECT id FROM orders WHERE order_date > '2025-08-01';

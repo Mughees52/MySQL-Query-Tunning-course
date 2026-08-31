@@ -121,6 +121,13 @@ name is "Maria" — you'd read the whole book. Measured on our data: filtering
 `order_date` alone against `(customer_id, order_date)` degrades to scanning
 all 1.2 million index entries.
 
+And here's the lie detector from lesson 1.4 paying off: **key_len**. Our
+composite is `(customer_id BIGINT, order_date DATETIME)` — 8 bytes + 5.
+Filter on `customer_id` alone and EXPLAIN shows `key_len: 8` — only the
+first column engaged. Add the date range and it reads `key_len: 13` — both
+columns working. Any time you *think* a query uses your whole composite,
+key_len is the one-glance proof of how much of it MySQL actually touched.
+
 Corollary worth memorizing: **equality columns first, range column last.**
 `(customer_id, order_date)` works because customer is `=` and date is a
 range. Flip the order and the range on `order_date` "uses up" the index —

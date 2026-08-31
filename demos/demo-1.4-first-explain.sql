@@ -19,6 +19,10 @@ EXPLAIN SELECT id, full_name, city
 FROM customers
 WHERE email = 'amara.dubois150000@example.com';
 
--- STEP 3 · [SLIDE 5] the ladder's other end — a PK lookup for contrast
+-- STEP 3 · the habit: SHOW WARNINGS right after any EXPLAIN
+-- expect: Note 1003 — the query as the optimizer rewrote it (expanded names)
+SHOW WARNINGS;
+
+-- STEP 4 · [SLIDE 5] the ladder's other end — a PK lookup for contrast
 -- expect: type=const, rows=1
 EXPLAIN SELECT id, status FROM orders WHERE id = 4242;

@@ -57,6 +57,7 @@ orders on 2025-06-15, 4,845 SG orders) are stable.
 | Cast trap (2.10) | 90 ms | 0.009 ms |
 | Skew: completed via idx vs scan (2.12) | 431 ms | 139 ms (IGNORE INDEX) |
 | Histogram estimate SG (2.13) | 119,463 est | ~4,898 est / 4,845 true |
+| key_len on composite (2.4) | 8 (customer_id only) | 13 (+order_date range) |
 | SELECT * export (3.3) | 69 ms | 2.9 ms |
 | OR → UNION (3.5) | 90 ms | 0.14 ms |
 | Anti-joins ×3 (3.7) | 248 / 342 / 377 ms | all = 8,266 rows |
