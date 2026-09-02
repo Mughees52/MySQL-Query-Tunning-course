@@ -19,16 +19,39 @@
 ## Lesson 0.1 — All about joins, MySQL edition
 *(video script, ~6 min)*
 
-A join combines rows from two tables by matching values in related
-columns. You'll write thousands of them; the performance chapters of this
-course are largely about what joins *cost*. Here we pin down what they
-*mean*.
+[SLIDE 1: the chapter map — four cards, one press each]
 
-[SLIDE 1: the chapter map — joins · subqueries · CTEs · temp tables]
+Welcome to chapter zero, the optional refresher. Four constructs live here,
+and this map is the whole chapter in one view — press through the cards
+with me.
 
-Four constructs, one organizing idea — scope: a subquery produces one value,
-a CTE lives for one statement, a temp table for one session. Keep that
-frame; everything in this chapter hangs off it.
+**Card one — joins**: reassembling what normalization split apart.
+Customers store a two-character country code; the facts about each country
+live once, in a lookup. The join is the reunion — slides 4 through 7 prove
+the mechanics on 300,000 customers and 32 countries.
+
+**Card two — subqueries**: a query inside a query. The card's example
+filters orders above the average order value, and the plan will tell us,
+in writing, that the inner query ran *only once* — 543,009 rows above the
+mean. Slide 3 shows when a subquery runs once versus per row; slide 8
+covers where they can live.
+
+**Card three — CTEs**: `WITH` names the building block first, so the query
+reads top-down like a sentence. And there's a measured surprise waiting on
+slide 9: reference a CTE twice and it's materialized once — 0.51 seconds
+against 0.96 inlined.
+
+**Card four — temporary tables**: results that outlive the statement.
+Materialize a slice once for 0.33 seconds, and every query for the rest of
+your session pays 27 milliseconds instead of 659. Slide 10.
+
+And the final press is the frame that organizes all four — **scope**. A
+subquery produces one value. A CTE lives for one statement. A temp table
+lives for one session. Keep that line in your head; everything in this
+chapter hangs off it.
+
+Before the first construct, though — two pieces of machinery most
+developers, and quite a few DBAs, were never taught.
 
 [SLIDE 2: how MySQL reads your SELECT]
 
@@ -75,6 +98,11 @@ everything: about a microsecond each on the index chapter 2 builds
 to kill a correlated subquery that couldn't finish. Positions and syntax
 come in lesson 0.4; keep only the one-look test: inner references nothing
 outer → runs once · references an outer column → runs per row.
+
+On to the first construct. A join combines rows from two tables by
+matching values in related columns. You'll write thousands of them; the
+performance chapters of this course are largely about what joins *cost* —
+here we pin down what they *mean*.
 
 [SLIDE 4: two tables that belong together]
 
